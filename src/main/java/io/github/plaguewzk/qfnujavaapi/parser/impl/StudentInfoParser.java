@@ -17,7 +17,6 @@ import java.util.Objects;
  */
 
 @Slf4j
-@SuppressWarnings("SpellCheckingInspection")
 public class StudentInfoParser implements HtmlParser<StudentInfo> {
 
     @Override

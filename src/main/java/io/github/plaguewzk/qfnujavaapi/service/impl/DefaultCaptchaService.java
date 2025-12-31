@@ -24,7 +24,6 @@ import java.nio.file.StandardCopyOption;
  *
  * @author PlagueWZK
  */
-@SuppressWarnings("SpellCheckingInspection")
 @Slf4j
 public class DefaultCaptchaService implements CaptchaService {
     private static final String TEMP_DIR_NAME = "qfnu_api_tessdata";

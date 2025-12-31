@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
  *
  * @author PlagueWZK
  */
-@SuppressWarnings("SpellCheckingInspection")
 @Getter
 @RequiredArgsConstructor
 public enum QFNUAPI {
