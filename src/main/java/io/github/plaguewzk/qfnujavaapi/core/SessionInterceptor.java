@@ -55,10 +55,14 @@ public class SessionInterceptor implements Interceptor {
     private boolean isSessionExpired(Response response, Request originalRequest) {
         String currentUrl = response.request().url().toString();
         String originalUrl = originalRequest.url().toString();
-        if (originalUrl.equals(QFNUAPI.INDEX.getValue()) || originalUrl.contains(QFNUAPI.LOGIN_POST.getValue()) || originalUrl.contains(QFNUAPI.CAPTCHA.getValue())) {
+
+        if (originalUrl.equals(QFNUAPI.INDEX.value) || originalUrl.contains(QFNUAPI.LOGIN_POST.value) || originalUrl.contains(QFNUAPI.CAPTCHA.value)) {
             return false;
         }
-        if (currentUrl.equals(QFNUAPI.INDEX.getValue())
+        if (originalUrl.contains("logout") || originalUrl.contains("method=exit")) {
+            return false;
+        }
+        if (currentUrl.equals(QFNUAPI.INDEX.value)
                 || currentUrl.contains("/jsxsd/xk/LoginToXk")
                 || currentUrl.endsWith("/jsxsd/")) {
             return true;

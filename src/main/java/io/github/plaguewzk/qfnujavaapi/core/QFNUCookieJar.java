@@ -51,4 +51,40 @@ public class QFNUCookieJar implements CookieJar {
             }
         }
     }
+
+    public boolean isEmpty() {
+        return cookieStore.isEmpty();
+    }
+
+    /**
+     * 获取当前存储的所有 Cookie 的快照（线程安全）
+     * 适用于：序列化保存、日志打印
+     */
+    public List<Cookie> getAllCookies() {
+        List<Cookie> allCookies = new ArrayList<>();
+        for (List<Cookie> hostCookies : cookieStore.values()) {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (hostCookies) {
+                allCookies.addAll(hostCookies);
+            }
+        }
+        return allCookies;
+    }
+
+    /**
+     * 获取指定域名的 Cookie 列表快照
+     *
+     * @param host 域名 (如 zhjw.qfnu.edu.cn)
+     */
+    public List<Cookie> getCookies(String host) {
+        List<Cookie> cookies = cookieStore.getOrDefault(host, new ArrayList<>());
+        synchronized (cookies) {
+            return new ArrayList<>(cookies);
+        }
+    }
+
+    public void clear() {
+        cookieStore.clear();
+        log.debug("CookieJar已清空");
+    }
 }

@@ -6,13 +6,32 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public record QFNUExecutor(OkHttpClient client) {
 
+    private static String encode(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new QFNUAPIException("URL编码失败:", e);
+        }
+    }
+
     public String executeGet(QFNUAPI endpoint) {
-        Request request = new Request.Builder().url(endpoint.getValue()).get().build();
+        Request request = new Request.Builder().url(endpoint.value).get().build();
+        return executeForString(request);
+    }
+
+    public String executeGet(QFNUAPI endpoint, Map<String, String> queryParameters) {
+        String queryString = queryParameters.entrySet().stream()
+                .map((entry) -> String.join("=", encode(entry.getKey()), encode(entry.getValue())))
+                .collect(Collectors.joining("&"));
+        Request request = new Request.Builder().url(endpoint.value + "?" + queryString).get().build();
         return executeForString(request);
     }
 
@@ -21,9 +40,9 @@ public record QFNUExecutor(OkHttpClient client) {
         body.forEach(builder::add);
 
         Request request = new Request.Builder()
-                .url(endpoint.getValue())
+                .url(endpoint.value)
                 .post(builder.build())
-                .header("Referer", referer != null ? referer : QFNUAPI.INDEX.getValue())
+                .header("Referer", referer != null ? referer : QFNUAPI.INDEX.value)
                 .build();
         return executeForString(request);
     }

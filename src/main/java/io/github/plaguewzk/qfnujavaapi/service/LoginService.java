@@ -1,6 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
+import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.exception.AccountOrPasswordErrorException;
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
@@ -43,7 +44,7 @@ public class LoginService {
         while (count < repeatCount) {
             try {
                 Request captchaReq = new Request.Builder()
-                        .url(QFNUAPI.CAPTCHA.getValue())
+                        .url(QFNUAPI.CAPTCHA.value)
                         .build();
                 byte[] imgBytes = executor.executeForBytes(captchaReq);
                 String code = captchaService.recognize(imgBytes);
@@ -72,6 +73,34 @@ public class LoginService {
         throw new QFNUAPIException("登录失败：达到最大重试次数，请检查网络或验证码服务");
     }
 
+    public boolean logout() {
+        if (executor.client().cookieJar() instanceof QFNUCookieJar qfnuCookieJar && qfnuCookieJar.isEmpty()) {
+            log.warn("未登录, 无法进行注销");
+            return true;
+        }
+        try {
+            log.debug("正在进行业务系统注销");
+            executor.executeGet(QFNUAPI.LOGOUT_APP, Map.of("method", "exit", "tktime", String.valueOf(System.currentTimeMillis())));
+            log.debug("正在进行认证系统注销");
+            executor.executeGet(QFNUAPI.LOGOUT_CAS);
+            log.info("已退出登录");
+        } catch (Exception e) {
+            log.warn("执行退出登录操作时遇到错误:", e);
+            return false;
+        } finally {
+            cleanLocalCookies();
+            log.info("退出登录操作完成");
+        }
+        return true;
+    }
+
+    private void cleanLocalCookies() {
+        if (executor.client().cookieJar() instanceof QFNUCookieJar cookieJar) {
+            cookieJar.clear();
+            log.debug("本地Cookie清理完毕");
+        }
+    }
+
     /**
      * 模拟一次登录请求
      *
@@ -89,7 +118,7 @@ public class LoginService {
         formData.put("userPassword", "");
         formData.put("RANDOMCODE", captcha);
         formData.put("encoded", encoded);
-        String html = executor.executePost(QFNUAPI.LOGIN_POST, formData, QFNUAPI.INDEX.getValue());
+        String html = executor.executePost(QFNUAPI.LOGIN_POST, formData, QFNUAPI.INDEX.value);
         if (html.contains("验证码错误")) {
             log.warn("服务端返回：验证码错误");
             return false;

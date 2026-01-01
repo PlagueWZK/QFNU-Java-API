@@ -1,6 +1,5 @@
 package io.github.plaguewzk.qfnujavaapi.core;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -8,7 +7,6 @@ import lombok.RequiredArgsConstructor;
  *
  * @author PlagueWZK
  */
-@Getter
 @RequiredArgsConstructor
 public enum QFNUAPI {
     //基础路径
@@ -20,11 +18,14 @@ public enum QFNUAPI {
     CAPTCHA(BASE_URL.value + "/verifycode.servlet"),
     LOGIN_POST(BASE_URL.value + "/xk/LoginToXkLdap"),
 
+    //退出登录
+    LOGOUT_APP(BASE_URL.value + "/xk/LoginToXk"),
+    LOGOUT_CAS("https://ids.qfnu.edu.cn/authserver/logout"),
+
     //页面相关
     MAIN_PAGE(BASE_URL.value + "/framework/xsMain.jsp"),
     MAIN_NEW_PAGE(BASE_URL.value + "/framework/xsMain_new.jsp?t1=1"),
     MAIN_INDEX_NOTIFICATION(BASE_URL.value + "/framework/main_index_loadtzgg.jsp");
 
-    private final String value;
-
+    public final String value;
 }
