@@ -42,6 +42,6 @@ public class NotificationService {
         String id = notification.id();
         String original = qfnuExecutor.executeGet(QFNUAPI.MAIN_INDEX_NOTIFICATION, Map.of("id", id));
         NotificationDetailParser.DetailResult detailResult = notificationDetailParser.parser(original);
-        return notification.withDetails(detailResult.dateTime(), detailResult.content(), detailResult.html());
+        return notification.withDetails(detailResult.publisher(), detailResult.dateTime(), detailResult.content(), detailResult.html());
     }
 }

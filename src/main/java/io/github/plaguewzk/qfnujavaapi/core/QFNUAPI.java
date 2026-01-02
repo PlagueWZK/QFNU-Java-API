@@ -25,6 +25,7 @@ public enum QFNUAPI {
     //页面相关
     MAIN_PAGE(BASE_URL.value + "/framework/xsMain.jsp"),
     MAIN_NEW_PAGE(BASE_URL.value + "/framework/xsMain_new.jsp?t1=1"),
+    MAIN_INDEX_LOAD_COURSE(BASE_URL.value + "/framework/main_index_loadkb.jsp"),
     MAIN_INDEX_NOTIFICATION_LIST(BASE_URL.value + "/framework/main_index_loadtzgg.jsp"),
 
     //通知相关

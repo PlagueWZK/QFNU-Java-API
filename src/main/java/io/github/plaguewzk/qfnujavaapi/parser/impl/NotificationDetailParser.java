@@ -1,6 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
+import io.github.plaguewzk.qfnujavaapi.util.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,7 +33,7 @@ public class NotificationDetailParser implements HtmlParser<NotificationDetailPa
             dateTime = span.size() > 1 ? span.get(1).text().trim() : "未知时间";
             Element contentDiv = Objects.requireNonNull(body.selectFirst("div.content"));
             content = contentDiv.text();
-            contentHtml = contentDiv.html();
+            contentHtml = Util.cleanHtml(contentDiv.html());
         } catch (Exception e) {
             log.error("解析通知时发生错误", e);
         }

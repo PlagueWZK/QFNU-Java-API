@@ -28,8 +28,8 @@ public record Notification(String id, String linkContent, String title, String p
         return null;
     }
 
-    public Notification withDetails(String fullDateTime, String newContent, String newHtml) {
+    public Notification withDetails(String publisher, String fullDateTime, String newContent, String newHtml) {
         String finalDateTime = fullDateTime != null && fullDateTime.isEmpty() ? fullDateTime : this.datetime;
-        return new Notification(this.id, this.linkContent, this.title, this.publisher, finalDateTime, content, html, true);
+        return new Notification(this.id, this.linkContent, this.title, publisher, fullDateTime, newContent, newHtml, true);
     }
 }

@@ -34,7 +34,7 @@ public class SessionInterceptor implements Interceptor {
             log.info("检测到未登录或Session过期, 执行自动登录");
             response.close();
             if (loginAction == null) {
-                throw new QFNUAPIException("自动登录失败, 自动登录操作方法为null");
+                throw new QFNUAPIException("自动登录失败, 登录操作方法为null");
             }
             synchronized (this) {
                 try {
