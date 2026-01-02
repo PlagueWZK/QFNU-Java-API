@@ -69,7 +69,7 @@ public class SessionInterceptor implements Interceptor {
         }
         try {
             String preview = response.peekBody(4096).string();
-            if (preview.contains("登录")) return true;
+            if (preview.contains("请输入账号") && preview.contains("请输入密码") && preview.contains("请输入验证码")) return true;
         } catch (IOException e) {
             log.warn("检测 Session 过期时读取 Body 失败", e);
         }

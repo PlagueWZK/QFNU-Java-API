@@ -4,6 +4,7 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.core.SessionInterceptor;
 import io.github.plaguewzk.qfnujavaapi.service.LoginService;
+import io.github.plaguewzk.qfnujavaapi.service.NotificationService;
 import io.github.plaguewzk.qfnujavaapi.service.StudentService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class QFNUClient {
     private final String userPassword;
     private final LoginService loginService;
     private final StudentService studentService;
-
+    private final NotificationService notificationService;
 
     private QFNUClient(String userAccount, String userPassword) {
         this.userAccount = userAccount;
@@ -42,6 +43,7 @@ public class QFNUClient {
         this.executor = new QFNUExecutor(this.httpClient);
         this.loginService = new LoginService(this.executor);
         this.studentService = new StudentService(this.executor);
+        this.notificationService = new NotificationService(this.executor);
     }
 
     public StudentService student() {
@@ -50,6 +52,10 @@ public class QFNUClient {
 
     public LoginService loginService() {
         return loginService;
+    }
+
+    public NotificationService notificationService() {
+        return notificationService;
     }
 
     public QFNUExecutor executor() {
