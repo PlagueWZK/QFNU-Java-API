@@ -8,9 +8,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Created on 2026/1/2 16:49
@@ -23,21 +23,22 @@ public class NotificationListParser implements HtmlParser<List<Notification>> {
     @Override
     public List<Notification> parser(String html) {
         Document doc = Jsoup.parse(html);
-        Elements notifications = doc.select("li.list-group-item");
-        List<Notification> notificationList = new LinkedList<>();
-        try {
-            for (Element notificationEle : notifications) {
-                String title = notificationEle.attr("title");
-                Element a = Objects.requireNonNull(notificationEle.selectFirst("a[onclick]"));
-                String link = a.html();
-                String onclick = a.attr("onclick");
-                String id = onclick.substring(onclick.indexOf("'") + 1, onclick.lastIndexOf("'"));
-                String dateTime = notificationEle.select("span[id^=fbsj]").text().trim();
-                notificationList.add(new Notification(id, link, title, null, dateTime, null, null, false));
+        Elements notificationsHtml = doc.select("li.list-group-item");
+        List<Notification> notifications = new ArrayList<>();
+        for (Element notificationEle : notificationsHtml) {
+            String title = notificationEle.attr("title");
+            Optional<Element> e = Optional.ofNullable(notificationEle.selectFirst("a[onclick]"));
+            String link = e.map(Element::html).orElse("");
+            String onclick = e.map(ee -> ee.attr("onclick")).orElse("");
+            String id = null;
+            if (!onclick.isBlank() && onclick.contains("'")) {
+                id = onclick.substring(onclick.indexOf("'") + 1, onclick.lastIndexOf("'"));
+            } else {
+                log.warn("解析列表遇到无效条目(缺少ID), onclick内容: [{}], 标题: [{}]", onclick, title);
             }
-        } catch (Exception e) {
-            log.error("解析通知列表时出错", e);
+            String dateTime = Optional.ofNullable(notificationEle.selectFirst("span[id^=fbsj]")).map(ee -> ee.text().trim()).orElse("");
+            notifications.add(new Notification(id, link, title, null, dateTime, null, null, false));
         }
-        return notificationList;
+        return notifications;
     }
 }

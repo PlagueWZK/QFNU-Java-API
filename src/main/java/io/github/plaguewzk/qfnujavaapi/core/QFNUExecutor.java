@@ -16,11 +16,7 @@ import java.util.stream.Collectors;
 public record QFNUExecutor(OkHttpClient client) {
 
     private static String encode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new QFNUAPIException("URL编码失败:", e);
-        }
+        return URLEncoder.encode(Objects.requireNonNull(value), StandardCharsets.UTF_8);
     }
 
     public String executeGet(QFNUAPI endpoint) {
@@ -78,26 +74,20 @@ public record QFNUExecutor(OkHttpClient client) {
     }
 
     public String buildUrl(QFNUAPI baseApi, Map<String, String> queryParameters) {
-        try {
-            HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(baseApi.value)).newBuilder();
-            if (queryParameters != null) {
-                queryParameters.forEach(builder::addQueryParameter);
-            }
-            return builder.build().toString();
-        } catch (Exception e) {
-            throw new QFNUAPIException(e);
+        HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(baseApi.value)).newBuilder();
+        if (queryParameters != null) {
+            queryParameters.forEach(builder::addQueryParameter);
         }
+        return builder.build().toString();
     }
 
     private Response call(Request request) {
         try {
             Response response = client.newCall(request).execute();
-
             if (!response.isSuccessful()) {
                 response.close();
                 throw new SystemNetworkException("教务系统响应异常: " + response.code());
             }
-
             log.debug("请求执行成功: [{}]", request.url());
             return response;
         } catch (IOException e) {

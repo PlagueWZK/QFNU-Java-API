@@ -74,7 +74,7 @@ public class QFNUCookieJar implements CookieJar {
     /**
      * 获取指定域名的 Cookie 列表快照
      *
-     * @param host 域名 (如 zhjw.qfnu.edu.cn)
+     * @param host 域名
      */
     public List<Cookie> getCookies(String host) {
         List<Cookie> cookies = cookieStore.getOrDefault(host, new ArrayList<>());
