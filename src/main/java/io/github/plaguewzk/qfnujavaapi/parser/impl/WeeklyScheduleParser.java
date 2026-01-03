@@ -27,7 +27,7 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
         Document doc = Jsoup.parse(html);
         Elements sections = doc.select("tbody tr");
         if (sections.isEmpty()) {
-            log.warn("为解析到课表结构");
+            log.error("解析课表信息发生错误");
             return null;
         }
         String credits = null;
@@ -53,15 +53,15 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
                     if (s.contains("学分")) {
                         credits = s.substring(s.indexOf('：') + 1);
                     } else if (s.contains("属性")) {
-                        property = s.substring(s.indexOf('：' + 1));
+                        property = s.substring(s.indexOf('：') + 1);
                     } else if (s.contains("课程名称")) {
-                        courseName = s.substring(s.indexOf('：' + 1));
+                        courseName = s.substring(s.indexOf('：') + 1);
                     } else if (s.contains("时间")) {
-                        rawTime = s.substring(s.indexOf('：' + 1));
+                        rawTime = s.substring(s.indexOf('：') + 1);
                     } else if (s.contains("地点")) {
-                        location = s.substring(s.indexOf('：' + 1));
+                        location = s.substring(s.indexOf('：') + 1);
                     } else if (s.contains("课堂名称")) {
-                        className = s.substring(s.indexOf('：' + 1));
+                        className = s.substring(s.indexOf('：') + 1);
                     }
                 }
                 if (rawTime != null) {
@@ -83,6 +83,7 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
                 weeklySchedule.add(new CourseInfo(courseName, credits, property, className, location, rawTime, dayOfWeek, startNode, endNode, week));
             }
         }
+        log.debug("解析课表信息成功");
         return new WeeklySchedule(week, weeklySchedule);
     }
 

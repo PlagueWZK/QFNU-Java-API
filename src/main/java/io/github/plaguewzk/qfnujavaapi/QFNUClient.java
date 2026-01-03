@@ -3,6 +3,7 @@ package io.github.plaguewzk.qfnujavaapi;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.core.SessionInterceptor;
+import io.github.plaguewzk.qfnujavaapi.service.CourseService;
 import io.github.plaguewzk.qfnujavaapi.service.LoginService;
 import io.github.plaguewzk.qfnujavaapi.service.NotificationService;
 import io.github.plaguewzk.qfnujavaapi.service.StudentService;
@@ -29,6 +30,7 @@ public class QFNUClient {
     private final LoginService loginService;
     private final StudentService studentService;
     private final NotificationService notificationService;
+    private final CourseService courseService;
 
     private QFNUClient(String userAccount, String userPassword) {
         this.userAccount = userAccount;
@@ -44,6 +46,7 @@ public class QFNUClient {
         this.loginService = new LoginService(this.executor);
         this.studentService = new StudentService(this.executor);
         this.notificationService = new NotificationService(this.executor);
+        this.courseService = new CourseService(this.executor);
     }
 
     public StudentService student() {
@@ -60,6 +63,10 @@ public class QFNUClient {
 
     public QFNUExecutor executor() {
         return executor;
+    }
+
+    public CourseService courseService() {
+        return courseService;
     }
 
     private boolean login() {

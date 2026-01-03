@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,6 +48,15 @@ public record QFNUExecutor(OkHttpClient client) {
         return executeForString(request);
     }
 
+    public String executePost(QFNUAPI endpoint, Map<String, String> body, QFNUAPI refererApi) {
+        return executePost(endpoint, body, refererApi.value);
+    }
+
+    public String executePost(QFNUAPI endpoint, Map<String, String> body, QFNUAPI refererApi, Map<String, String> queryParameters) {
+        String referer = buildUrl(refererApi, queryParameters);
+        return executePost(endpoint, body, referer);
+    }
+
     public byte[] executeForBytes(Request request) {
         try (Response response = call(request)) {
             ResponseBody body = response.body();
@@ -63,6 +73,18 @@ public record QFNUExecutor(OkHttpClient client) {
             return body != null ? body.string() : "";
         } catch (IOException e) {
             log.error("转换字符串失败[{}]: {}", request.url(), e.getMessage());
+            throw new QFNUAPIException(e);
+        }
+    }
+
+    public String buildUrl(QFNUAPI baseApi, Map<String, String> queryParameters) {
+        try {
+            HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(baseApi.value)).newBuilder();
+            if (queryParameters != null) {
+                queryParameters.forEach(builder::addQueryParameter);
+            }
+            return builder.build().toString();
+        } catch (Exception e) {
             throw new QFNUAPIException(e);
         }
     }

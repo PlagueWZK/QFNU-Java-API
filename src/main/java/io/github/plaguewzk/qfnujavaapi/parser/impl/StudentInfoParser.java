@@ -24,7 +24,7 @@ public class StudentInfoParser implements HtmlParser<StudentInfo> {
         Document doc = Jsoup.parse(html);
         Element container = doc.selectFirst(".middletopttxlr");
         if (container == null) {
-            log.warn("教务系统HTML源码变更，获取信息失败");
+            log.error("解析学生信息发生错误");
             return null;
         }
         String name = null;
