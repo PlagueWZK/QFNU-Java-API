@@ -2,6 +2,7 @@ package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 
