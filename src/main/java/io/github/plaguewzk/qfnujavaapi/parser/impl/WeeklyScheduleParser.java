@@ -27,7 +27,7 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
         Document doc = Jsoup.parse(html);
         Elements sections = doc.select("tbody tr");
         if (sections.isEmpty()) {
-            log.error("解析课表信息发生错误");
+            log.error("解析课表信息发生错误,未找到课程标签");
             return null;
         }
         String credits = null;

@@ -25,8 +25,12 @@ public class CourseService {
     private String sjmsValueCache;
 
     public WeeklySchedule getCurrentWeeklySchedule() {
+        return getWeeklySchedule(LocalDate.now());
+    }
+
+    public WeeklySchedule getWeeklySchedule(LocalDate date) {
         sjmsValueCache = getOrFetchSjms();
-        String html = qfnuExecutor.executePost(QFNUAPI.MAIN_INDEX_LOAD_COURSE, Map.of("rq", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE), "sjmsValue", sjmsValueCache), QFNUAPI.MAIN_NEW_PAGE, Map.of("t1", "1"));
+        String html = qfnuExecutor.executePost(QFNUAPI.MAIN_INDEX_LOAD_COURSE, Map.of("rq", date.format(DateTimeFormatter.ISO_LOCAL_DATE), "sjmsValue", sjmsValueCache), QFNUAPI.MAIN_NEW_PAGE, Map.of("t1", "1"));
         return weeklyScheduleParser.parser(html);
     }
 
