@@ -17,12 +17,7 @@ import java.util.Objects;
 public class SjmsParser implements HtmlParser<String> {
     @Override
     public String parser(String html) {
-        try {
-            Element option = Jsoup.parse(html).selectFirst("select[name='sjms'] option[value]");
-            return Objects.requireNonNull(option).val().trim();
-        } catch (Exception e) {
-            log.error("解析sjms值发生错误", e);
-        }
-        return null;
+        Element option = Jsoup.parse(html).selectFirst("select[name='sjms'] option[value]");
+        return Objects.requireNonNull(option).val().trim();
     }
 }

@@ -8,7 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Created on 2026/1/2 00:51
@@ -21,22 +21,20 @@ public class NotificationDetailParser implements HtmlParser<NotificationDetailPa
     @Override
     public DetailResult parser(String html) {
         Document doc = Jsoup.parse(html);
-        String publisher = null;
-        String dateTime = null;
-        String content = null;
-        String contentHtml = null;
-        try {
-            Element body = Objects.requireNonNull(doc.selectFirst("body"));
-            Element desc = Objects.requireNonNull(body.selectFirst("p.desc"));
-            Elements span = desc.select("span");
-            publisher = !span.isEmpty() ? span.get(0).text().trim() : "未知发布者";
-            dateTime = span.size() > 1 ? span.get(1).text().trim() : "未知时间";
-            Element contentDiv = Objects.requireNonNull(body.selectFirst("div.content"));
-            content = contentDiv.text();
-            contentHtml = Util.cleanHtml(contentDiv.html());
-        } catch (Exception e) {
-            log.error("解析通知时发生错误", e);
-        }
+
+        Optional<Element> bodyOpt = Optional.of(doc.body());
+        Optional<Elements> span = bodyOpt.map(b -> b.selectFirst("p.desc"))
+                .map(desc -> desc.select("span"));
+        String publisher = span.filter(spans -> !spans.isEmpty())
+                .map(spans -> spans.get(0).text().trim())
+                .orElse("未知发布者");
+        String dateTime = span.filter(spans -> spans.size() > 1)
+                .map(spans -> spans.get(1).text().trim())
+                .orElse("未知时间");
+
+        Optional<Element> contentOpt = bodyOpt.map(body -> body.selectFirst("div.content"));
+        String content = contentOpt.map(Element::text).orElse("");
+        String contentHtml = contentOpt.map(e -> Util.cleanHtml(e.html())).orElse("");
         return new DetailResult(publisher, dateTime, content, contentHtml);
     }
 
