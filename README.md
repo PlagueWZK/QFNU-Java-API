@@ -20,7 +20,9 @@
 * **全自动会话管理**：
     * 内置 `CookieJar` 管理 Cookie。
     * **智能 Session 拦截器**：自动检测 Session 过期，并在后台静默完成“重新获取验证码 -> 登录 -> 重发请求”的流程，对上层业务无感。
-* **验证码支持**：提供 `CaptchaService` 接口，支持自定义 OCR 实现（默认提供接口定义）。
+* **验证码支持**：提供 `CaptchaService` 接口，内置 Tesseract OCR 实现，并支持自定义 OCR。
+* **通知公告能力**：支持通知列表与详情解析（含文本与清理后的 HTML）。
+* **周课表解析**：支持当周课表查询与结构化解析。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
 * **健壮的异常处理**：统一的异常体系，区分网络错误、解析错误和业务逻辑错误。
 
@@ -29,6 +31,7 @@
 * **核心语言**: Java 17
 * **网络请求**: OkHttp3
 * **页面解析**: Jsoup
+* **验证码识别**: Tess4J (Tesseract)
 * **工具库**: Lombok, SLF4J
 * **构建工具**: Maven
 
@@ -62,23 +65,52 @@ public class Main {
 }
 ```
 
+### 获取通知公告
+
+```java
+import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
+import java.util.List;
+
+List<Notification> list = client.notificationService().getList();
+for (Notification item : list) {
+    System.out.println(item.title() + " - " + item.publisher());
+}
+```
+
+### 获取本周课表
+
+```java
+import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
+
+WeeklySchedule schedule = client.courseService().getCurrentWeeklySchedule();
+System.out.println("当前周次: " + schedule.currentWeek());
+System.out.println("课程数: " + schedule.courseList().size());
+```
+
 ## 📂 项目结构 | Project Structure
 
 ```Plaintext
 io.github.plaguewzk.qfnujavaapi
 ├── core               // 核心组件
+│   ├── QFNUAPI.java        // 接口常量
 │   ├── QFNUClient.java     // 客户端入口
 │   ├── QFNUExecutor.java   // HTTP执行器
 │   ├── SessionInterceptor.java // 会话拦截器
 │   └── QFNUCookieJar.java  // Cookie管理
 ├── model              // 数据模型
-│   └── entity              // 实体类 (Records)
+│   └── entity              // 实体类 (StudentInfo, WeeklySchedule, CourseInfo, Notification)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
-│   └── impl                // 具体实现 (如 StudentInfoParser)
+│   └── impl                // 具体实现 (如 StudentInfoParser, WeeklyScheduleParser, NotificationListParser, NotificationDetailParser)
 ├── service            // 业务服务层
 │   ├── LoginService.java   // 登录逻辑
-│   └── StudentService.java // 学生相关业务
+│   ├── StudentService.java // 学生相关业务
+│   ├── CourseService.java  // 课表相关业务
+│   ├── NotificationService.java // 通知相关业务
+│   ├── CaptchaService.java // 验证码识别接口
+│   └── impl                // 默认验证码实现 (DefaultCaptchaService)
+├── util               // 工具类
+│   └── Util.java
 └── exception          // 自定义异常
 ```
 
@@ -90,9 +122,11 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 基础信息解析 (StudentInfo)
 
-- [ ] 验证码识别服务对接 (OCR)
+- [x] 验证码识别服务对接 (OCR)
 
-- [ ] 课表查询与解析 (Course Schedule)
+- [x] 当周课表查询与解析 (Weekly Schedule)
+
+- [x] 通知公告列表与详情解析
 
 - [ ] 成绩查询与解析 (Grade & GPA)
 

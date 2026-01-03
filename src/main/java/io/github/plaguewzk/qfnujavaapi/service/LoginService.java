@@ -118,7 +118,7 @@ public class LoginService {
         formData.put("userPassword", "");
         formData.put("RANDOMCODE", captcha);
         formData.put("encoded", encoded);
-        String html = executor.executePost(QFNUAPI.LOGIN_POST, formData, QFNUAPI.INDEX.value);
+        String html = executor.executePost(QFNUAPI.LOGIN_POST, formData, QFNUAPI.INDEX);
         if (html.contains("验证码错误")) {
             log.warn("服务端返回：验证码错误");
             return false;
