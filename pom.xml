@@ -28,6 +28,9 @@
     </scm>
     <properties>
         <java.version>17</java.version>
+        <okhttp.version>4.12.0</okhttp.version>
+        <jsoup.version>1.21.2</jsoup.version>
+        <tess4j.version>5.10.0</tess4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -52,17 +55,17 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.12.0</version>
+            <version>${okhttp.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.21.2</version>
+            <version>${jsoup.version}</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>
             <artifactId>tess4j</artifactId>
-            <version>5.10.0</version>
+            <version>${tess4j.version}</version>
         </dependency>
     </dependencies>
 

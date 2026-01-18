@@ -11,8 +11,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created on 2026/1/2 23:17
@@ -22,6 +20,8 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
+    private final CourseInfoParser courseInfoParser = new CourseInfoParser();
+
     @Override
     public WeeklySchedule parser(String html) {
         Document doc = Jsoup.parse(html);
@@ -30,73 +30,17 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
             log.error("解析课表信息发生错误,未找到课程标签");
             return null;
         }
-        String credits = null;
-        String property = null;
-        String courseName = null;
-        String rawTime = null;
-        String location = null;
-        String className = null;
-        Integer dayOfWeek = null;
-        Integer startNode = null;
-        Integer endNode = null;
-        Integer week = null;
         List<CourseInfo> weeklySchedule = new ArrayList<>();
         for (Element section : sections) {
             Elements courseHtml = section.select("td p");
             if (courseHtml.isEmpty()) {
                 continue;
             }
-
             for (Element element : courseHtml) {
-                String[] info = element.attr("title").split("<br/>");
-                for (String s : info) {
-                    if (s.contains("学分")) {
-                        credits = s.substring(s.indexOf('：') + 1);
-                    } else if (s.contains("属性")) {
-                        property = s.substring(s.indexOf('：') + 1);
-                    } else if (s.contains("课程名称")) {
-                        courseName = s.substring(s.indexOf('：') + 1);
-                    } else if (s.contains("时间")) {
-                        rawTime = s.substring(s.indexOf('：') + 1);
-                    } else if (s.contains("地点")) {
-                        location = s.substring(s.indexOf('：') + 1);
-                    } else if (s.contains("课堂名称")) {
-                        className = s.substring(s.indexOf('：') + 1);
-                    }
-                }
-                if (rawTime != null) {
-                    //第10周 星期二 [09-10-11]节
-                    String regex = "^第(\\d+)周\\s+星期([一二三四五六七])\\s+\\[(\\d+).*-(\\d+)]节$";
-                    Pattern pattern = Pattern.compile(regex);
-                    Matcher matcher = pattern.matcher(rawTime);
-                    if (matcher.find()) {
-                        String weekStr = matcher.group(1);
-                        String dayStr = matcher.group(2);
-                        String startStr = matcher.group(3);
-                        String endStr = matcher.group(4);
-                        week = Integer.parseInt(weekStr);
-                        dayOfWeek = parseWeekDay(dayStr);
-                        startNode = Integer.parseInt(startStr);
-                        endNode = Integer.parseInt(endStr);
-                    }
-                }
-                weeklySchedule.add(new CourseInfo(courseName, credits, property, className, location, rawTime, dayOfWeek, startNode, endNode, week));
+                CourseInfo courseInfo = courseInfoParser.parser(element.html());
+                weeklySchedule.add(courseInfo);
             }
         }
-        log.debug("解析课表信息成功");
-        return new WeeklySchedule(week, weeklySchedule);
-    }
-
-    private Integer parseWeekDay(String dayStr) {
-        return switch (dayStr) {
-            case "一" -> 1;
-            case "二" -> 2;
-            case "三" -> 3;
-            case "四" -> 4;
-            case "五" -> 5;
-            case "六" -> 6;
-            case "七" -> 7;
-            default -> 0;
-        };
+        return new WeeklySchedule(weeklySchedule.get(0).week(), weeklySchedule);
     }
 }

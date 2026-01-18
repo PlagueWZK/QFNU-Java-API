@@ -60,8 +60,8 @@ public class LoginService {
                 Thread.currentThread().interrupt();
                 throw new QFNUAPIException("登录线程被中断", e);
             } catch (QFNUAPIException e) {
-                if (e.getMessage().contains("账号或密码错误")) {
-                    throw e;
+                if (e.getMessage().contains("账号或者密码错误")) {
+                    throw new AccountOrPasswordErrorException("账号或密码错误" ,e);
                 }
                 log.error("登录过程出错: {}", e.getMessage());
                 count++;

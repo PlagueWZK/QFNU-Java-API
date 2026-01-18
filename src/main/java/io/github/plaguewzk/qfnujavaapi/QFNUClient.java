@@ -47,7 +47,7 @@ public class QFNUClient {
         this.courseService = new CourseService(this.executor);
     }
 
-    public StudentService student() {
+    public StudentService studentService() {
         return studentService;
     }
 
