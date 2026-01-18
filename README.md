@@ -7,7 +7,7 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-orange)](https://www.oracle.com/java/)
 [![OkHttp](https://img.shields.io/badge/OkHttp-4.x-green)](https://square.github.io/okhttp/)
 [![Jsoup](https://img.shields.io/badge/Jsoup-1.15%2B-blue)](https://jsoup.org/)
-[![License](https://img.shields.io/badge/license-MIT-yellow)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 
 ## 📖 简介 | Introduction
 
@@ -22,7 +22,7 @@
     * **智能 Session 拦截器**：自动检测 Session 过期，并在后台静默完成“重新获取验证码 -> 登录 -> 重发请求”的流程，对上层业务无感。
 * **验证码支持**：提供 `CaptchaService` 接口，内置 Tesseract OCR 实现，并支持自定义 OCR。
 * **通知公告能力**：支持通知列表与详情解析（含文本与清理后的 HTML）。
-* **周课表解析**：支持当周课表查询与结构化解析。
+* **周课表解析**：支持从主页加载当周课表并结构化解析（含课程格子详情）。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
 * **健壮的异常处理**：统一的异常体系，区分网络错误、解析错误和业务逻辑错误。
 
@@ -41,6 +41,7 @@
 
 ```java
 import io.github.plaguewzk.qfnujavaapi.QFNUClient;
+import io.github.plaguewzk.qfnujavaapi.model.entity.StudentInfo;
 
 public class Main {
     public static void main(String[] args) {
@@ -51,8 +52,8 @@ public class Main {
         
         // 此时并未立即登录，将在发起第一个请求时自动登录
         try {
-        // 获取学生服务模块
-            StudentInfo info = client.student().getStudentInfo();
+            // 获取学生服务模块
+            StudentInfo info = client.studentService().getStudentInfo();
 
             System.out.println("姓名: " + info.name());
             System.out.println("学院: " + info.academy());
@@ -77,12 +78,12 @@ for (Notification item : list) {
 }
 ```
 
-### 获取本周课表
+### 获取本周课表（主页当周课表）
 
 ```java
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
 
-WeeklySchedule schedule = client.courseService().getCurrentWeeklySchedule();
+WeeklySchedule schedule = client.courseService().getCurrentWeeklyScheduleFromMainPage();
 System.out.println("当前周次: " + schedule.currentWeek());
 System.out.println("课程数: " + schedule.courseList().size());
 ```
@@ -91,17 +92,17 @@ System.out.println("课程数: " + schedule.courseList().size());
 
 ```Plaintext
 io.github.plaguewzk.qfnujavaapi
-├── core               // 核心组件
-│   ├── QFNUAPI.java        // 接口常量
-│   ├── QFNUClient.java     // 客户端入口
-│   ├── QFNUExecutor.java   // HTTP执行器
+├── QFNUClient.java     // 客户端入口
+├── core                // 核心组件
+│   ├── QFNUAPI.java         // 接口常量
+│   ├── QFNUExecutor.java    // HTTP执行器
 │   ├── SessionInterceptor.java // 会话拦截器
-│   └── QFNUCookieJar.java  // Cookie管理
+│   └── QFNUCookieJar.java   // Cookie管理
 ├── model              // 数据模型
-│   └── entity              // 实体类 (StudentInfo, WeeklySchedule, CourseInfo, Notification)
+│   └── entity              // 实体类 (StudentInfo, Notification, WeeklySchedule, CourseInfo, Course, CourseTable, Term)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
-│   └── impl                // 具体实现 (如 StudentInfoParser, WeeklyScheduleParser, NotificationListParser, NotificationDetailParser)
+│   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser(待完成), CourseTableParse(待完成))
 ├── service            // 业务服务层
 │   ├── LoginService.java   // 登录逻辑
 │   ├── StudentService.java // 学生相关业务
@@ -124,9 +125,11 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 验证码识别服务对接 (OCR)
 
-- [x] 当周课表查询与解析 (Weekly Schedule)
+- [x] 主页当周课表查询与解析 (Weekly Schedule)
 
 - [x] 通知公告列表与详情解析
+
+- [ ] 学期理论课表查询与解析 (CourseTable/CourseParser)
 
 - [ ] 成绩查询与解析 (Grade & GPA)
 
