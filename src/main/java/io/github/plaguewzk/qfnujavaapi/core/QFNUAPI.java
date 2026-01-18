@@ -12,9 +12,9 @@ public enum QFNUAPI {
     //基础路径
     HOST("http://zhjw.qfnu.edu.cn"),
     BASE_URL(HOST.value + "/jsxsd"),
+    INDEX(BASE_URL.value + "/"),
 
     //登录相关
-    INDEX(BASE_URL.value + "/"),
     CAPTCHA(BASE_URL.value + "/verifycode.servlet"),
     LOGIN_POST(BASE_URL.value + "/xk/LoginToXkLdap"),
 
@@ -29,7 +29,9 @@ public enum QFNUAPI {
     MAIN_INDEX_NOTIFICATION_LIST(BASE_URL.value + "/framework/main_index_loadtzgg.jsp"),
 
     //通知相关
-    MAIN_INDEX_NOTIFICATION(BASE_URL.value + "/framework/main_index_tzgg.jsp");
+    MAIN_INDEX_NOTIFICATION(BASE_URL.value + "/framework/main_index_tzgg.jsp"),
 
+    //学期理论课表
+    STUDENT_COURSE_LIST(BASE_URL.value + "/xskb/xskb_list.do");
     public final String value;
 }

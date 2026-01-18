@@ -2,6 +2,7 @@ package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
+import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.SjmsParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.WeeklyScheduleParser;
@@ -24,11 +25,16 @@ public class CourseService {
 
     private String sjmsValueCache;
 
-    public WeeklySchedule getCurrentWeeklySchedule() {
-        return getWeeklySchedule(LocalDate.now());
+    public WeeklySchedule getCourseTable(Term term, int week) {
+        //TODO: Implement
+        return null;
     }
 
-    public WeeklySchedule getWeeklySchedule(LocalDate date) {
+    public WeeklySchedule getCurrentWeeklyScheduleFromMainPage() {
+        return getWeeklyScheduleFromMainPage(LocalDate.now());
+    }
+
+    public WeeklySchedule getWeeklyScheduleFromMainPage(LocalDate date) {
         sjmsValueCache = getOrFetchSjms();
         String html = qfnuExecutor.executePost(QFNUAPI.MAIN_INDEX_LOAD_COURSE, Map.of("rq", date.format(DateTimeFormatter.ISO_LOCAL_DATE), "sjmsValue", sjmsValueCache), QFNUAPI.MAIN_NEW_PAGE, Map.of("t1", "1"));
         return weeklyScheduleParser.parser(html);

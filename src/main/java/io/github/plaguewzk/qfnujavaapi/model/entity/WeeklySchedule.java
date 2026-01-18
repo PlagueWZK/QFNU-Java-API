@@ -8,6 +8,8 @@ import java.util.List;
  * @author PlagueWZK
  */
 
-public record WeeklySchedule(Integer currentWeek, List<CourseInfo> courseList) {
-
+public record WeeklySchedule(Integer currentWeek, Term term, List<CourseInfo> courseList) {
+    public WeeklySchedule(Integer currentWeek, List<CourseInfo> courseList) {
+        this(currentWeek, Term.current(), courseList);
+    }
 }
