@@ -4,6 +4,7 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
+import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.SjmsParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.WeeklyScheduleParser;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +22,13 @@ import java.util.Map;
 public class CourseService {
     private final QFNUExecutor qfnuExecutor;
     private final WeeklyScheduleParser weeklyScheduleParser = new WeeklyScheduleParser();
+    private final CourseTableParse courseTableParse = new CourseTableParse();
     private final SjmsParser sjmsParser = new SjmsParser();
 
     private String sjmsValueCache;
 
     public WeeklySchedule getCourseTable(Term term, int week) {
-        //TODO: Implement
+
         return null;
     }
 

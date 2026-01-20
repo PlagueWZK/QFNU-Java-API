@@ -12,7 +12,7 @@ import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 public class CourseTableParse implements HtmlParser<CourseTable> {
     @Override
     public CourseTable parser(String html) {
-        //TODO
+
         return null;
     }
 }

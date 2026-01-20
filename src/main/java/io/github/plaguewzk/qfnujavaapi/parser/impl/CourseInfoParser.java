@@ -30,7 +30,7 @@ public class CourseInfoParser implements HtmlParser<CourseInfo> {
         Integer endNode = null;
         Integer week = null;
 
-        Element courseHtml = Jsoup.parse(html);
+        Element courseHtml = Jsoup.parseBodyFragment(html);
 
         String[] info = courseHtml.attr("title").split("<br/>");
         for (String s : info) {
