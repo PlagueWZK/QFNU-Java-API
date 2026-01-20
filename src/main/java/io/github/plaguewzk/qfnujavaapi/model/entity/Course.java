@@ -24,7 +24,7 @@ public record Course(String courseName, Weeks weeks, String section, String loca
             this(new ArrayList<>(List.of(integers)));
         }
 
-        public Weeks parse(String weeksStr) {
+        public static Weeks parse(String weeksStr) {
             if (weeksStr == null) {
                 throw new IllegalArgumentException("周数不能为空");
             }

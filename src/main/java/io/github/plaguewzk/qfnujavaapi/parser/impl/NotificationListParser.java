@@ -25,6 +25,10 @@ public class NotificationListParser implements HtmlParser<List<Notification>> {
         Document doc = Jsoup.parse(html);
         Elements notificationsHtml = doc.select("li.list-group-item");
         List<Notification> notifications = new ArrayList<>();
+        if (notificationsHtml.isEmpty()) {
+            log.warn("无通知");
+            return notifications;
+        }
         for (Element notificationEle : notificationsHtml) {
             String title = notificationEle.attr("title");
             Optional<Element> e = Optional.ofNullable(notificationEle.selectFirst("a[onclick]"));
@@ -34,7 +38,7 @@ public class NotificationListParser implements HtmlParser<List<Notification>> {
             if (!onclick.isBlank() && onclick.contains("'")) {
                 id = onclick.substring(onclick.indexOf("'") + 1, onclick.lastIndexOf("'"));
             } else {
-                log.warn("解析列表遇到无效条目(缺少ID), onclick内容: [{}], 标题: [{}]", onclick, title);
+                log.warn("解析通知列表时遇到无效条目(缺少ID), onclick内容: [{}], 标题: [{}]", onclick, title);
             }
             String dateTime = Optional.ofNullable(notificationEle.selectFirst("span[id^=fbsj]")).map(ee -> ee.text().trim()).orElse("");
             notifications.add(new Notification(id, link, title, null, dateTime, null, null, false));

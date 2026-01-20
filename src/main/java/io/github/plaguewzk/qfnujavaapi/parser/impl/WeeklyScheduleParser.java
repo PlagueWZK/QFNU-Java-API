@@ -1,5 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
 import io.github.plaguewzk.qfnujavaapi.model.entity.CourseInfo;
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
@@ -25,9 +26,13 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
     @Override
     public WeeklySchedule parser(String html) {
         Document doc = Jsoup.parse(html);
-        Elements sections = doc.select("tbody tr");
+        Element tbody = doc.selectFirst("tbody");
+        if (tbody == null) {
+            throw new SystemChangedException("未找到课表tbody标签");
+        }
+        Elements sections = tbody.select("tbody tr");
         if (sections.isEmpty()) {
-            log.error("解析课表信息发生错误,未找到课程标签");
+            log.warn("未查询到课表");
             return null;
         }
         List<CourseInfo> weeklySchedule = new ArrayList<>();
