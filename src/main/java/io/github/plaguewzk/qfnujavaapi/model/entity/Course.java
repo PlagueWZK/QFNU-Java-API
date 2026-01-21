@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public record Course(String courseName, Weeks weeks, Section section, String location, String teacher) {
 
     public enum SectionConstant {
-        S01(1), S02(2), S03(3), S04(4), S05(5), S06(6), S07(7), S08(8), S09(9), S10(10), S11(11), UNDEFINED(-1);
+        S01(1), S02(2), S03(3), S04(4), S05(5), S06(6), S07(7), S08(8), S09(9), S10(10), S11(11), UNDEFINED(0);
 
         private static final Map<Integer, SectionConstant> CACHE = new HashMap<>();
 
@@ -116,7 +116,7 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
     }
 
     public record Section(SectionConstant start, SectionConstant end) {
-        private static final Pattern SECTION_PATTERN = Pattern.compile("\\[(\\d{1,2})(?:\\s*-\\s*(\\d{1,2}))?.*]");
+        private static final Pattern SECTION_PATTERN = Pattern.compile("\\[(\\d{1,2})(?:\\s*-\\s*(\\d{1,2}))*.*]");
 
         public Section {
             if (start == SectionConstant.UNDEFINED && end != SectionConstant.UNDEFINED) {
@@ -156,6 +156,9 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
         public String toString() {
             if (start == SectionConstant.UNDEFINED) {
                 return "UNDEFINED";
+            }
+            if (start == end) {
+                return start.valueToString();
             }
             return start.valueToString() + "-" + end.valueToString();
         }
