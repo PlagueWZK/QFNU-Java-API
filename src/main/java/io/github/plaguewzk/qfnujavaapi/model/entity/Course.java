@@ -2,7 +2,6 @@ package io.github.plaguewzk.qfnujavaapi.model.entity;
 
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -132,7 +131,7 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
         }
 
         public static Section parse(String sectionStr) {
-            if (!StringUtils.hasText(sectionStr)) {
+            if (sectionStr == null || sectionStr.trim().isEmpty()) {
                 return new Section();
             }
             Matcher matcher = SECTION_PATTERN.matcher(sectionStr);

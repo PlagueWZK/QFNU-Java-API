@@ -7,7 +7,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
      */
     @Override
     public List<Course> parser(String html) {
-        if (!StringUtils.hasText(html)) {
+        if (html == null || html.trim().isEmpty()) {
             return new ArrayList<>();
         }
 
@@ -48,7 +47,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
 
         List<Course> courses = new ArrayList<>();
         for (String segment : courseSegments) {
-            if (!StringUtils.hasText(segment.replaceAll("<br>|&nbsp;", "").trim())) {
+            if (segment.replaceAll("<br>|&nbsp;", "").trim().isEmpty()) {
                 continue;
             }
             Course course = parseSingleCourseFragment(segment);
@@ -71,26 +70,26 @@ public class CourseParser implements HtmlParser<List<Course>> {
         String courseName = null;
         for (TextNode node : container.textNodes()) {
             String text = node.text().trim();
-            if (StringUtils.hasText(text) && text.length() > 1) {
+            if (text.length() > 1) {
                 courseName = text;
                 break;
             }
         }
 
-        if (!StringUtils.hasText(courseName)) {
+        if (courseName == null || courseName.trim().isEmpty()) {
             return null;
         }
         String teacher = extractText(container, "老师");
         String location = extractText(container, "教室");
         String rawTime = extractText(container, "周次(节次)");
-        Course.Weeks weeks = Optional.ofNullable(rawTime)
+        Course.Weeks weeks = Optional.of(rawTime)
                 .map(t -> t.split("\\[")[0])
                 .map(t -> t.replace("(周)", ""))
                 .map(String::trim)
                 .map(Course.Weeks::parse)
                 .orElse(null);
 
-        Course.Section section = Optional.ofNullable(rawTime)
+        Course.Section section = Optional.of(rawTime)
                 .map(Course.Section::parse)
                 .orElse(null);
 
