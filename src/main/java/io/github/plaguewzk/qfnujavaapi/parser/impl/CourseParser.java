@@ -8,6 +8,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
  *
  * @author PlagueWZK
  */
+@SuppressWarnings("OptionalOfNullableMisuse")
 @Slf4j
 public class CourseParser implements HtmlParser<List<Course>> {
 
@@ -65,6 +67,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
      *
      * @param htmlFragment 切割后的 HTML 片段
      */
+    @Nullable
     private Course parseSingleCourseFragment(String htmlFragment) {
         Document doc = Jsoup.parseBodyFragment("<div>" + htmlFragment + "</div>");
         Element container = doc.body().child(0);
@@ -83,17 +86,17 @@ public class CourseParser implements HtmlParser<List<Course>> {
         String teacher = extractText(container, "老师");
         String location = extractText(container, "教室");
         String rawTime = extractText(container, "周次(节次)");
-        if (rawTime.isBlank()) {
+        if (rawTime == null || rawTime.isBlank()) {
             throw new ParsingErrorException("课程解析失败：缺少周次(节次)信息，课程名=" + courseName);
         }
-        Course.Weeks weeks = Optional.of(rawTime)
+        Course.Weeks weeks = Optional.ofNullable(rawTime)
                 .map(t -> t.split("\\[")[0])
                 .map(t -> t.replace("(周)", ""))
                 .map(String::trim)
                 .map(Course.Weeks::parse)
                 .orElse(null);
 
-        Course.Section section = Optional.of(rawTime)
+        Course.Section section = Optional.ofNullable(rawTime)
                 .map(Course.Section::parse)
                 .orElse(null);
 
@@ -103,6 +106,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
     /**
      * 辅助提取方法
      */
+    @Nullable
     private String extractText(Element parent, String title) {
         return Optional.ofNullable(parent.selectFirst("font[title='" + title + "']"))
                 .map(Element::text)

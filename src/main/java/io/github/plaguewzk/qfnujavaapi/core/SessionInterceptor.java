@@ -10,7 +10,6 @@ import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.function.Supplier;
 
 /**
  * Created on 2026/1/1 00:58
@@ -21,9 +20,9 @@ import java.util.function.Supplier;
 @SuppressWarnings("ClassCanBeRecord")
 @Slf4j
 public class SessionInterceptor implements Interceptor {
-    private final Supplier<Boolean> loginAction;
+    private final Runnable loginAction;
 
-    public SessionInterceptor(Supplier<Boolean> loginAction) {
+    public SessionInterceptor(Runnable loginAction) {
         this.loginAction = loginAction;
     }
 
@@ -40,13 +39,10 @@ public class SessionInterceptor implements Interceptor {
             }
             synchronized (this) {
                 try {
-                    boolean autoLoginSuccess = loginAction.get();
-                    if (autoLoginSuccess) {
-                        log.info("自动登录成功, 尝试重新发送请求...");
-                        Request newRequest = request.newBuilder().build();
-                        return chain.proceed(newRequest);
-                    }
-                    throw new SessionRefreshException("自动登录失败：登录动作返回 false");
+                    loginAction.run();
+                    log.info("自动登录成功, 尝试重新发送请求...");
+                    Request newRequest = request.newBuilder().build();
+                    return chain.proceed(newRequest);
                 } catch (QFNUAPIException e) {
                     throw new SessionRefreshException("尝试重新自动登录失败", e);
                 } catch (Exception e) {

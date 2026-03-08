@@ -53,14 +53,8 @@ public class QFNUClient {
         return serviceFactory.getService(serviceType);
     }
 
-    private boolean login() {
-        try {
-            service(LoginService.class).autoLogin(DEFAULT_LOGIN_RETRY_COUNT);
-            return true;
-        } catch (Exception e) {
-            log.error("登录失败: {}", e.getMessage());
-            return false;
-        }
+    private void login() {
+        service(LoginService.class).autoLogin(DEFAULT_LOGIN_RETRY_COUNT);
     }
 
     public static class Builder {

@@ -10,6 +10,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
     private final CourseInfoParser courseInfoParser = new CourseInfoParser();
 
     @Override
+    @Nullable
     public WeeklySchedule parser(String html) {
         Document doc = Jsoup.parse(html);
         Element tbody = doc.selectFirst("tbody");

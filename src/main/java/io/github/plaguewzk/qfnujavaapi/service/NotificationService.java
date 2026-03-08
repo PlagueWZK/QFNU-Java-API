@@ -7,6 +7,7 @@ import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationDetailParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationListParser;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,8 @@ public class NotificationService {
         return filledList;
     }
 
-    public Notification fillDetail(Notification notification) {
+    @Nullable
+    public Notification fillDetail(@Nullable Notification notification) {
         if (notification == null) {
             return null;
         }
