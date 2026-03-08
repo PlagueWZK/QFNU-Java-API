@@ -1,5 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +83,9 @@ public class CourseParser implements HtmlParser<List<Course>> {
         String teacher = extractText(container, "老师");
         String location = extractText(container, "教室");
         String rawTime = extractText(container, "周次(节次)");
+        if (rawTime.isBlank()) {
+            throw new ParsingErrorException("课程解析失败：缺少周次(节次)信息，课程名=" + courseName);
+        }
         Course.Weeks weeks = Optional.of(rawTime)
                 .map(t -> t.split("\\[")[0])
                 .map(t -> t.replace("(周)", ""))

@@ -1,5 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.model.entity.CourseInfo;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,9 @@ import java.util.regex.Pattern;
 public class CourseInfoParser implements HtmlParser<CourseInfo> {
     @Override
     public CourseInfo parser(String html) {
+        if (html == null || html.isBlank()) {
+            throw new ParsingErrorException("课程详情解析失败：HTML 不能为空");
+        }
         String credits = null;
         String property = null;
         String courseName = null;
@@ -31,6 +35,9 @@ public class CourseInfoParser implements HtmlParser<CourseInfo> {
         Integer week = null;
 
         Element courseHtml = Jsoup.parseBodyFragment(html);
+        if (courseHtml.attr("title").isBlank()) {
+            throw new ParsingErrorException("课程详情解析失败：缺少 title 属性");
+        }
 
         String[] info = courseHtml.attr("title").split("<br/>");
         for (String s : info) {
@@ -61,6 +68,8 @@ public class CourseInfoParser implements HtmlParser<CourseInfo> {
                     dayOfWeek = parseWeekDay(dayStr);
                     startNode = Integer.parseInt(startStr);
                     endNode = Integer.parseInt(endStr);
+                } else {
+                    throw new ParsingErrorException("课程详情解析失败：时间格式无法识别 -> " + rawTime);
                 }
             }
         }

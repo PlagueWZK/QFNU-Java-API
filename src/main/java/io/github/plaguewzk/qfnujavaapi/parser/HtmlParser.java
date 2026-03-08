@@ -15,7 +15,7 @@ public interface HtmlParser<T> {
      *
      * @param html 页面源码
      * @return 解析后的对象
-     * @throws QFNUAPIException 如果解析过程中发生严重错误
+     * @throws QFNUAPIException 如果解析过程中发生结构变更、内容格式异常或其他严重错误
      */
     T parser(String html);
 }

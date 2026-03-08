@@ -1,6 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.exception;
 
-public class AccountOrPasswordErrorException extends QFNUAPIException {
+public class AccountOrPasswordErrorException extends AuthenticationException {
     public AccountOrPasswordErrorException(String message) {
         super(message);
     }

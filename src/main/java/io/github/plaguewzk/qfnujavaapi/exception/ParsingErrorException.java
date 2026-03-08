@@ -1,6 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.exception;
 
-public class ParsingErrorException extends RuntimeException {
+public class ParsingErrorException extends QFNUAPIException {
     public ParsingErrorException(String message) {
         super(message);
     }
@@ -11,10 +11,6 @@ public class ParsingErrorException extends RuntimeException {
 
     public ParsingErrorException(Throwable cause) {
         super(cause);
-    }
-
-    public ParsingErrorException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 
     public ParsingErrorException() {

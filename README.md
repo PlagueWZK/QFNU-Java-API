@@ -21,6 +21,7 @@
 ## ✨ 特性 | Features
 
 * **优雅的流式调用**：使用 Builder 模式构建客户端，API 设计简洁直观。
+* **通用服务工厂**：支持通过 `client.service(XxxService.class)` 按需获取服务，新增服务无需修改客户端主入口。
 * **全自动会话管理**：
     * 内置 `CookieJar` 管理 Cookie。
     * **智能 Session 拦截器**：自动检测 Session 过期，并在后台静默完成“重新获取验证码 -> 登录 -> 重发请求”的流程，对上层业务无感。
@@ -29,6 +30,22 @@
 * **周课表解析**：支持从主页加载当周课表并结构化解析（含课程格子详情）。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
 * **健壮的异常处理**：统一的异常体系，区分网络错误、解析错误和业务逻辑错误。
+
+## 异常体系
+
+* `QFNUAPIException`：SDK 运行时异常总基类。
+* `InvalidParameterException`：调用方传入的参数不合法。
+* `AuthenticationException`：认证与会话相关异常基类。
+* `AccountOrPasswordErrorException`：账号或密码错误。
+* `LoginFailedException`：登录流程重试耗尽、线程中断或依赖失败。
+* `SessionRefreshException`：会话过期后自动续期失败。
+* `SystemNetworkException`：网络请求失败或响应读取失败。
+* `SystemChangedException`：教务系统页面结构变化，现有解析器无法继续工作。
+* `ParsingErrorException`：页面结构仍可访问，但具体字段格式不符合预期。
+* `CaptchaException`：验证码能力异常基类。
+* `CaptchaInitializationException`：OCR 引擎初始化失败。
+* `CaptchaRecognitionException`：OCR 识别过程失败。
+* `ServiceCreationException`：服务工厂创建服务实例失败。
 
 ## 🛠️ 技术栈 | Tech Stack
 
@@ -56,8 +73,8 @@ public class Main {
         
         // 此时并未立即登录，将在发起第一个请求时自动登录
         try {
-            // 获取学生服务模块
-            StudentInfo info = client.studentService().getStudentInfo();
+            StudentInfo info = client.service(io.github.plaguewzk.qfnujavaapi.service.StudentService.class)
+                    .getStudentInfo();
 
             System.out.println("姓名: " + info.name());
             System.out.println("学院: " + info.academy());
@@ -76,7 +93,7 @@ public class Main {
 import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
 import java.util.List;
 
-List<Notification> list = client.notificationService().getList();
+List<Notification> list = client.service(io.github.plaguewzk.qfnujavaapi.service.NotificationService.class).getList();
 for (Notification item : list) {
     System.out.println(item.title() + " - " + item.publisher());
 }
@@ -87,7 +104,8 @@ for (Notification item : list) {
 ```java
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
 
-WeeklySchedule schedule = client.courseService().getCurrentWeeklyScheduleFromMainPage();
+WeeklySchedule schedule = client.service(io.github.plaguewzk.qfnujavaapi.service.CourseService.class)
+        .getCurrentWeeklyScheduleFromMainPage();
 System.out.println("当前周次: " + schedule.currentWeek());
 System.out.println("课程数: " + schedule.courseList().size());
 ```
@@ -99,7 +117,9 @@ io.github.plaguewzk.qfnujavaapi
 ├── QFNUClient.java     // 客户端入口
 ├── core                // 核心组件
 │   ├── QFNUAPI.java         // 接口常量
+│   ├── QFNUContext.java     // 共享运行时上下文
 │   ├── QFNUExecutor.java    // HTTP执行器
+│   ├── ServiceFactory.java  // 通用服务工厂
 │   ├── SessionInterceptor.java // 会话拦截器
 │   └── QFNUCookieJar.java   // Cookie管理
 ├── model              // 数据模型

@@ -11,7 +11,7 @@ public record Term(int startYear, int endYear, int termIndex) {
             throw new InvalidParameterException("学期id年份必须连续(如2025-2026)");
         }
         if (termIndex < 1 || termIndex > 2) {
-            throw new InvalidParameterException("学期id必须为1,2或3");
+            throw new InvalidParameterException("学期id必须为1或2");
         }
     }
 

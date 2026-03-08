@@ -1,10 +1,14 @@
 package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
+import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.exception.AccountOrPasswordErrorException;
+import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
+import io.github.plaguewzk.qfnujavaapi.exception.LoginFailedException;
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
+import io.github.plaguewzk.qfnujavaapi.exception.UnknownErrorException;
 import io.github.plaguewzk.qfnujavaapi.service.impl.DefaultCaptchaService;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Request;
@@ -23,24 +27,33 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("ClassCanBeRecord")
 @Slf4j
 public class LoginService {
+    private final QFNUContext context;
     private final QFNUExecutor executor;
     private final CaptchaService captchaService;
 
-    public LoginService(QFNUExecutor executor, CaptchaService captchaService) {
-        captchaService = captchaService != null ? captchaService : DefaultHolder.INSTANCE;
-        this.executor = executor;
+    public LoginService(QFNUContext context) {
+        CaptchaService captchaService = context.captchaService() != null ? context.captchaService() : DefaultHolder.INSTANCE;
+        this.context = context;
+        this.executor = context.executor();
         this.captchaService = captchaService;
     }
 
-    public LoginService(QFNUExecutor executor) {
-        this(executor, null);
+    public void autoLogin(int repeatCount) {
+        if (context.userAccount() == null || context.userAccount().isBlank()) {
+            throw new InvalidParameterException("账号(account)不能为空");
+        }
+        if (context.userPassword() == null || context.userPassword().isBlank()) {
+            throw new InvalidParameterException("密码(password)不能为空");
+        }
+        doAutoLogin(context.userAccount(), context.userPassword(), repeatCount);
     }
 
     /**
      * 执行自动登录流程
      */
-    public void autoLogin(String userAccount, String userPassword, int repeatCount) {
+    private void doAutoLogin(String userAccount, String userPassword, int repeatCount) {
         int count = 0;
+        QFNUAPIException lastException = null;
         while (count < repeatCount) {
             try {
                 Request captchaReq = new Request.Builder()
@@ -58,19 +71,20 @@ public class LoginService {
                 TimeUnit.MILLISECONDS.sleep(1);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new QFNUAPIException("登录线程被中断", e);
+                throw new LoginFailedException("登录线程被中断", e);
+            } catch (AccountOrPasswordErrorException e) {
+                throw e;
             } catch (QFNUAPIException e) {
-                if (e.getMessage().contains("账号或者密码错误")) {
-                    throw new AccountOrPasswordErrorException("账号或密码错误" ,e);
-                }
+                lastException = e;
                 log.error("登录过程出错: {}", e.getMessage());
                 count++;
             } catch (Exception e) {
+                lastException = new UnknownErrorException("登录过程发生未知异常", e);
                 log.error("未知异常: {}", e.getMessage());
                 count++;
             }
         }
-        throw new QFNUAPIException("登录失败：达到最大重试次数，请检查网络或验证码服务");
+        throw new LoginFailedException("登录失败：达到最大重试次数，请检查网络、验证码识别或教务系统状态", lastException);
     }
 
     public boolean logout() {

@@ -1,6 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.service.impl;
 
-import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
+import io.github.plaguewzk.qfnujavaapi.exception.CaptchaInitializationException;
+import io.github.plaguewzk.qfnujavaapi.exception.CaptchaRecognitionException;
 import io.github.plaguewzk.qfnujavaapi.service.CaptchaService;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.ITesseract;
@@ -55,14 +56,14 @@ public class DefaultCaptchaService implements CaptchaService {
                 log.info("正在释放训练数据到临时目录: {}", filePath.toAbsolutePath());
                 try (InputStream in = this.getClass().getClassLoader().getResourceAsStream("tessdata/" + DATA_FILE_NAME)) {
                     if (in == null) {
-                        throw new QFNUAPIException("严重错误：Jar包内找不到 /tessdata/" + DATA_FILE_NAME + " 文件！");
+                        throw new CaptchaInitializationException("验证码识别引擎初始化失败：Jar 包内缺少 tessdata/" + DATA_FILE_NAME);
                     }
                     Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
             return dirPath.toAbsolutePath().toString();
         } catch (IOException e) {
-            throw new RuntimeException("无法初始化 OCR 引擎，操作路径失败", e);
+            throw new CaptchaInitializationException("验证码识别引擎初始化失败：无法释放训练数据", e);
         }
     }
 
@@ -80,7 +81,7 @@ public class DefaultCaptchaService implements CaptchaService {
             }
         } catch (TesseractException | IOException e) {
             log.error("验证码识别报错: {}", e.getMessage());
-            return "";
+            throw new CaptchaRecognitionException("验证码识别失败", e);
         }
     }
 

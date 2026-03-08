@@ -1,5 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
 import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
 import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
@@ -40,7 +41,11 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
         if (selectedWeek == null || selectedWeek.val().isEmpty()) {
             week = 0;
         } else {
-            week = Integer.parseInt(selectedWeek.val());
+            try {
+                week = Integer.parseInt(selectedWeek.val());
+            } catch (NumberFormatException e) {
+                throw new ParsingErrorException("学期理论课表解析失败：周次格式非法", e);
+            }
         }
         Element selectedTerm = doc.selectFirst("select#xnxq01id option[selected]");
         Term term = Optional.ofNullable(selectedTerm).map(Element::text).map(Term::parse).orElse(null);

@@ -1,6 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.model.entity;
 
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
+import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -43,12 +44,15 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
     public record Weeks(List<Integer> weeks) {
         public Weeks {
             if (weeks == null) {
-                throw new IllegalArgumentException("周数不能为空");
+                throw new InvalidParameterException("周数不能为空");
             }
             weeks = new ArrayList<>(weeks);
             for (Integer week : weeks) {
+                if (week == null) {
+                    throw new InvalidParameterException("周数列表中不能包含 null");
+                }
                 if (week < 1 || week > 20) {
-                    throw new IllegalArgumentException("周数必须在1-20之间");
+                    throw new InvalidParameterException("周数必须在1-20之间");
                 }
             }
             weeks.sort(Integer::compareTo);
@@ -61,21 +65,32 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
 
         public static Weeks parse(String weeksStr) {
             if (weeksStr == null) {
-                throw new IllegalArgumentException("周数不能为空");
+                throw new InvalidParameterException("周数字符串不能为空");
             }
             List<Integer> weeksList = new ArrayList<>();
-            String[] weeks = weeksStr.split(",");
-            for (String week : weeks) {
-                if (week.contains("-")) {
-                    String[] range = week.split("-");
-                    int start = Integer.parseInt(range[0]);
-                    int end = Integer.parseInt(range[1]);
-                    for (int i = start; i <= end; i++) {
-                        weeksList.add(i);
+            try {
+                String[] weeks = weeksStr.split(",");
+                for (String week : weeks) {
+                    String trimmedWeek = week.trim();
+                    if (trimmedWeek.isEmpty()) {
+                        continue;
                     }
-                } else {
-                    weeksList.add(Integer.parseInt(week));
+                    if (trimmedWeek.contains("-")) {
+                        String[] range = trimmedWeek.split("-");
+                        if (range.length != 2) {
+                            throw new InvalidParameterException("周次范围格式错误: " + trimmedWeek);
+                        }
+                        int start = Integer.parseInt(range[0].trim());
+                        int end = Integer.parseInt(range[1].trim());
+                        for (int i = start; i <= end; i++) {
+                            weeksList.add(i);
+                        }
+                    } else {
+                        weeksList.add(Integer.parseInt(trimmedWeek));
+                    }
                 }
+            } catch (NumberFormatException e) {
+                throw new InvalidParameterException("周次格式错误: " + weeksStr, e);
             }
             return new Weeks(weeksList);
         }
@@ -143,8 +158,10 @@ public record Course(String courseName, Weeks weeks, Section section, String loc
                         endStr = Integer.parseInt(matcher.group(2));
                     }
                     return new Section(SectionConstant.of(startStr), SectionConstant.of(endStr));
+                } catch (QFNUAPIException e) {
+                    throw e;
                 } catch (Exception e) {
-                    throw new InvalidParameterException("解析到的节次数值非法");
+                    throw new InvalidParameterException("解析到的节次数值非法", e);
                 }
             }
             return new Section();

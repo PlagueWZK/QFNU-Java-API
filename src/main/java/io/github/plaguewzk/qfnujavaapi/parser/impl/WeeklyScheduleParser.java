@@ -1,5 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
 import io.github.plaguewzk.qfnujavaapi.model.entity.CourseInfo;
 import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
@@ -45,6 +46,13 @@ public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
                 CourseInfo courseInfo = courseInfoParser.parser(element.html());
                 weeklySchedule.add(courseInfo);
             }
+        }
+        if (weeklySchedule.isEmpty()) {
+            log.warn("课表区域存在，但未解析到任何课程");
+            return null;
+        }
+        if (weeklySchedule.get(0).week() == null) {
+            throw new ParsingErrorException("周课表解析失败：未能解析当前周次");
         }
         return new WeeklySchedule(weeklySchedule.get(0).week(), weeklySchedule);
     }

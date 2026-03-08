@@ -1,11 +1,11 @@
 package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
+import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationDetailParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationListParser;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -18,11 +18,16 @@ import java.util.Map;
  * @author PlagueWZK
  */
 @Slf4j
-@RequiredArgsConstructor
 public class NotificationService {
+    private final QFNUContext context;
     private final QFNUExecutor qfnuExecutor;
     private final NotificationDetailParser notificationDetailParser = new NotificationDetailParser();
     private final NotificationListParser notificationListParser = new NotificationListParser();
+
+    public NotificationService(QFNUContext context) {
+        this.context = context;
+        this.qfnuExecutor = context.executor();
+    }
 
     public List<Notification> getList() {
         String original = qfnuExecutor.executeGet(QFNUAPI.MAIN_INDEX_NOTIFICATION_LIST);

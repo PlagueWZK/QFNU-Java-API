@@ -1,6 +1,8 @@
 package io.github.plaguewzk.qfnujavaapi.core;
 
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
+import io.github.plaguewzk.qfnujavaapi.exception.SessionRefreshException;
+import io.github.plaguewzk.qfnujavaapi.exception.SystemNetworkException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -34,7 +36,7 @@ public class SessionInterceptor implements Interceptor {
             log.info("检测到未登录或Session过期, 执行自动登录");
             response.close();
             if (loginAction == null) {
-                throw new QFNUAPIException("自动登录失败, 登录操作方法为null");
+                throw new SessionRefreshException("自动登录失败：登录动作未初始化");
             }
             synchronized (this) {
                 try {
@@ -44,8 +46,11 @@ public class SessionInterceptor implements Interceptor {
                         Request newRequest = request.newBuilder().build();
                         return chain.proceed(newRequest);
                     }
+                    throw new SessionRefreshException("自动登录失败：登录动作返回 false");
+                } catch (QFNUAPIException e) {
+                    throw new SessionRefreshException("尝试重新自动登录失败", e);
                 } catch (Exception e) {
-                    throw new QFNUAPIException("尝试重新自动登录失败", e);
+                    throw new SessionRefreshException("尝试重新自动登录时发生未知错误", e);
                 }
             }
         }
@@ -72,7 +77,7 @@ public class SessionInterceptor implements Interceptor {
             if (preview.contains("请输入账号") && preview.contains("请输入密码") && preview.contains("请输入验证码")) return true;
         } catch (IOException e) {
             log.warn("检测 Session 过期时读取 Body 失败");
-            throw new QFNUAPIException(e);
+            throw new SystemNetworkException("检测 Session 状态时读取响应体失败", e);
         }
         return false;
     }

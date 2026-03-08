@@ -1,6 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
+import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
 import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
@@ -8,7 +9,6 @@ import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.SjmsParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.WeeklyScheduleParser;
-import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -19,14 +19,19 @@ import java.util.Map;
  *
  * @author PlagueWZK
  */
-@RequiredArgsConstructor
 public class CourseService {
+    private final QFNUContext context;
     private final QFNUExecutor qfnuExecutor;
     private final WeeklyScheduleParser weeklyScheduleParser = new WeeklyScheduleParser();
     private final CourseTableParse courseTableParse = new CourseTableParse();
     private final SjmsParser sjmsParser = new SjmsParser();
 
     private String sjmsValueCache;
+
+    public CourseService(QFNUContext context) {
+        this.context = context;
+        this.qfnuExecutor = context.executor();
+    }
 
     public CourseTable getCourseTable(Term term, int week) {
         String result = qfnuExecutor.executePost(QFNUAPI.STUDENT_COURSE_LIST, Map.of("zc", String.valueOf(week), "xnxq01id", term.toString()), QFNUAPI.INDEX);
