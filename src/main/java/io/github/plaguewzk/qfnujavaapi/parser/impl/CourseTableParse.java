@@ -11,11 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created on 2026/1/19 01:46
@@ -33,12 +29,16 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
         }
         Document doc = Jsoup.parse(html);
         Set<Course> courses = new LinkedHashSet<>();
+        String note = null;
         Elements rows = doc.select("table#kbtable tr");
         for (Element row : rows) {
             Elements cells = row.children();
             int weekdayColumn = 0;
             for (Element cell : cells) {
                 if (!"td".equals(cell.tagName())) {
+                    if (cell.text().contains("备注")) {
+                        note = Optional.ofNullable(cell.nextElementSibling()).map(Element::text).map(String::trim).orElse(null);
+                    }
                     continue;
                 }
                 weekdayColumn++;
@@ -63,6 +63,7 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
         }
         Element selectedTerm = doc.selectFirst("select#xnxq01id option[selected]");
         Term term = Optional.ofNullable(selectedTerm).map(Element::text).map(Term::parse).orElse(null);
-        return new CourseTable(term, week, new ArrayList<>(courses));
+        String remarkEle = Optional.ofNullable(doc.selectFirst("span > font[color=red]:matchesOwn(^注)")).map(Element::text).map(String::trim).orElse(null);
+        return new CourseTable(term, week, new ArrayList<>(courses), note, remarkEle);
     }
 }
