@@ -12,8 +12,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created on 2026/1/19 01:46
@@ -31,7 +33,7 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
         }
         Document doc = Jsoup.parse(html);
         Elements courseTable = doc.select("table#kbtable td:has(div.kbcontent)");
-        List<Course> courses = new ArrayList<>();
+        Set<Course> courses = new LinkedHashSet<>();
         for (Element element : courseTable) {
             List<Course> result = courseParser.parser(element.html());
             courses.addAll(result);
@@ -49,6 +51,6 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
         }
         Element selectedTerm = doc.selectFirst("select#xnxq01id option[selected]");
         Term term = Optional.ofNullable(selectedTerm).map(Element::text).map(Term::parse).orElse(null);
-        return new CourseTable(term, week, courses);
+        return new CourseTable(term, week, new ArrayList<>(courses));
     }
 }
