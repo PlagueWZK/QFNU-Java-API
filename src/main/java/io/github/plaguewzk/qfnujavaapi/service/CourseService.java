@@ -20,17 +20,18 @@ import java.util.Map;
  * @author PlagueWZK
  */
 public class CourseService {
-    private final QFNUContext context;
     private final QFNUExecutor qfnuExecutor;
-    private final WeeklyScheduleParser weeklyScheduleParser = new WeeklyScheduleParser();
-    private final CourseTableParse courseTableParse = new CourseTableParse();
-    private final SjmsParser sjmsParser = new SjmsParser();
+    private final WeeklyScheduleParser weeklyScheduleParser;
+    private final CourseTableParse courseTableParse;
+    private final SjmsParser sjmsParser;
 
     private String sjmsValueCache;
 
     public CourseService(QFNUContext context) {
-        this.context = context;
         this.qfnuExecutor = context.executor();
+        this.weeklyScheduleParser = new WeeklyScheduleParser();
+        this.courseTableParse = new CourseTableParse();
+        this.sjmsParser = new SjmsParser();
     }
 
     public CourseTable getCourseTable(Term term, int week) {
@@ -43,11 +44,12 @@ public class CourseService {
                 qfnuExecutor.executeGet(QFNUAPI.STUDENT_COURSE_LIST)
         );
     }
-
+    @Deprecated
     public WeeklySchedule getCurrentWeeklyScheduleFromMainPage() {
         return getWeeklyScheduleFromMainPage(LocalDate.now());
     }
 
+    @Deprecated
     public WeeklySchedule getWeeklyScheduleFromMainPage(LocalDate date) {
         sjmsValueCache = getOrFetchSjms();
         String html = qfnuExecutor.executePost(QFNUAPI.MAIN_INDEX_LOAD_COURSE, Map.of("rq", date.format(DateTimeFormatter.ISO_LOCAL_DATE), "sjmsValue", sjmsValueCache), QFNUAPI.MAIN_NEW_PAGE, Map.of("t1", "1"));
