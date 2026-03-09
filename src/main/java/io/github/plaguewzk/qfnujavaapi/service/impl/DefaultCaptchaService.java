@@ -18,6 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Created on 2025/12/30 01:11
@@ -29,20 +32,45 @@ import java.nio.file.StandardCopyOption;
 public class DefaultCaptchaService implements CaptchaService {
     private static final String TEMP_DIR_NAME = "qfnu_api_tessdata";
     private static final String DATA_FILE_NAME = "eng.traineddata";
-    private final ITesseract tesseract;
+    private static final int CAPTCHA_LENGTH = 4;
+    private static final Pattern CAPTCHA_PATTERN = Pattern.compile("^[0-9a-z]{4}$");
+    private static final double DEFAULT_SCALE_FACTOR = 3.0;
+
+    private final List<OcrStrategy> strategies;
 
     public DefaultCaptchaService() {
-        this.tesseract = new Tesseract();
+        this(defaultStrategySpecs());
+    }
+
+    DefaultCaptchaService(List<StrategySpec> strategySpecs) {
         String dataPath = loadAndReleaseTessData();
         log.debug("默认OCR: Tesseract 数据路径设置为: {}", dataPath);
-        this.tesseract.setDatapath(dataPath);
-        this.tesseract.setLanguage("eng");
+        this.strategies = buildStrategies(dataPath, strategySpecs);
+    }
 
-        this.tesseract.setVariable("tessedit_pageseg_mode", "7");
+    static List<StrategySpec> defaultStrategySpecs() {
+        // 基于真实验证码评估，fixed-170-psm8 目前是默认主策略。
+        return List.of(
+                StrategySpec.fixed("fixed-170-psm8", 8, 170)
+        );
+    }
 
-        this.tesseract.setVariable("tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyz");
-        this.tesseract.setVariable("load_system_dawg", "F");
-        this.tesseract.setVariable("load_freq_dawg", "F");
+    private List<OcrStrategy> buildStrategies(String dataPath, List<StrategySpec> strategySpecs) {
+        return strategySpecs.stream()
+                .map(spec -> new OcrStrategy(spec, newTesseract(dataPath, spec.pageSegMode())))
+                .toList();
+    }
+
+    private Tesseract newTesseract(String dataPath, int pageSegMode) {
+        Tesseract tesseract = new Tesseract();
+        tesseract.setDatapath(dataPath);
+        tesseract.setLanguage("eng");
+        tesseract.setPageSegMode(pageSegMode);
+        tesseract.setVariable("tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyz");
+        tesseract.setVariable("load_system_dawg", "F");
+        tesseract.setVariable("load_freq_dawg", "F");
+        tesseract.setVariable("user_defined_dpi", "300");
+        return tesseract;
     }
 
     private String loadAndReleaseTessData() {
@@ -73,25 +101,65 @@ public class DefaultCaptchaService implements CaptchaService {
             if (imageBytes == null || imageBytes.length == 0) return "";
             ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
             BufferedImage image = ImageIO.read(bais);
-            if (image == null) return "";
-            BufferedImage processedImage = preprocessPipeline(image);
-            synchronized (this) {
-                String result = tesseract.doOCR(processedImage);
-                return result.replaceAll("\\s+", "").trim();
+            if (image == null) {
+                throw new CaptchaRecognitionException("验证码识别失败：图片内容为空");
             }
+            return recognizeWithStrategies(image);
         } catch (TesseractException | IOException e) {
             log.error("验证码识别报错: {}", e.getMessage());
             throw new CaptchaRecognitionException("验证码识别失败", e);
         }
     }
 
-    /**
-     * 整合后的图像预处理流水线
-     */
-    private BufferedImage preprocessPipeline(BufferedImage original) {
-        BufferedImage scaled = scaleImage(original, 3.0);
-        BufferedImage binary = convertToBinaryOtsu(scaled);
-        return removeNoise(binary);
+    private String recognizeWithStrategies(BufferedImage original) throws TesseractException {
+        for (OcrStrategy strategy : strategies) {
+            String candidate;
+            try {
+                candidate = doRecognize(strategy, original);
+            } catch (TesseractException e) {
+                log.debug("OCR策略[{}]执行失败: {}", strategy.spec().name(), e.getMessage());
+                continue;
+            }
+            if (!isValidCaptcha(candidate)) {
+                log.debug("OCR策略[{}]结果无效: {}", strategy.spec().name(), candidate);
+                continue;
+            }
+            log.debug("OCR策略[{}]得到有效结果: {}", strategy.spec().name(), candidate);
+            return candidate;
+        }
+        throw new CaptchaRecognitionException("验证码识别失败：所有策略均未识别出合法的4位验证码");
+    }
+
+    private String doRecognize(OcrStrategy strategy, BufferedImage original) throws TesseractException {
+        BufferedImage processedImage = preprocess(original, strategy.spec());
+        synchronized (strategy.engine()) {
+            return normalizeResult(strategy.engine().doOCR(processedImage));
+        }
+    }
+
+    private String normalizeResult(String rawResult) {
+        if (rawResult == null) {
+            return "";
+        }
+        return rawResult
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^0-9a-z]", "")
+                .trim();
+    }
+
+    private boolean isValidCaptcha(String candidate) {
+        return candidate != null
+                && candidate.length() == CAPTCHA_LENGTH
+                && CAPTCHA_PATTERN.matcher(candidate).matches();
+    }
+
+    private BufferedImage preprocess(BufferedImage original, StrategySpec spec) {
+        BufferedImage scaled = scaleImage(original, spec.scaleFactor());
+        return switch (spec.pipeline()) {
+            case OTSU -> removeNoise(convertToBinaryOtsu(scaled));
+            case FIXED_THRESHOLD -> removeNoise(convertToBinaryFixedThreshold(scaled, spec.fixedThreshold()));
+            case CONTRAST -> normalizeContrast(scaled);
+        };
     }
 
     /**
@@ -142,6 +210,19 @@ public class DefaultCaptchaService implements CaptchaService {
         return binaryImage;
     }
 
+    private BufferedImage convertToBinaryFixedThreshold(BufferedImage image, int threshold) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        BufferedImage binaryImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int gray = image.getRGB(x, y) & 0xFF;
+                binaryImage.setRGB(x, y, gray < threshold ? 0x000000 : 0xFFFFFF);
+            }
+        }
+        return binaryImage;
+    }
+
     /**
      * Otsu 算法实现：寻找类间方差最大的阈值
      */
@@ -181,6 +262,38 @@ public class DefaultCaptchaService implements CaptchaService {
         return threshold;
     }
 
+    private BufferedImage normalizeContrast(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        BufferedImage normalized = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+        int min = 255;
+        int max = 0;
+        int[] grays = new int[width * height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int gray = image.getRGB(x, y) & 0xFF;
+                grays[y * width + x] = gray;
+                min = Math.min(min, gray);
+                max = Math.max(max, gray);
+            }
+        }
+
+        if (max == min) {
+            return image;
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int gray = grays[y * width + x];
+                int normalizedGray = (gray - min) * 255 / (max - min);
+                int rgb = (normalizedGray << 16) | (normalizedGray << 8) | normalizedGray;
+                normalized.setRGB(x, y, rgb);
+            }
+        }
+        return normalized;
+    }
+
     private BufferedImage removeNoise(BufferedImage image) {
         // 但原本的 8 邻域少于 3 个黑点就清除的逻辑依然比较稳健，可以暂不修改。
         int width = image.getWidth();
@@ -204,5 +317,28 @@ public class DefaultCaptchaService implements CaptchaService {
             }
         }
         return image;
+    }
+
+    enum Pipeline {
+        OTSU,
+        FIXED_THRESHOLD,
+        CONTRAST
+    }
+
+    record StrategySpec(String name, int pageSegMode, Pipeline pipeline, int fixedThreshold, double scaleFactor) {
+        static StrategySpec otsu(String name, int pageSegMode) {
+            return new StrategySpec(name, pageSegMode, Pipeline.OTSU, -1, DEFAULT_SCALE_FACTOR);
+        }
+
+        static StrategySpec fixed(String name, int pageSegMode, int fixedThreshold) {
+            return new StrategySpec(name, pageSegMode, Pipeline.FIXED_THRESHOLD, fixedThreshold, DEFAULT_SCALE_FACTOR);
+        }
+
+        static StrategySpec contrast(String name, int pageSegMode) {
+            return new StrategySpec(name, pageSegMode, Pipeline.CONTRAST, -1, 4.0);
+        }
+    }
+
+    private record OcrStrategy(StrategySpec spec, ITesseract engine) {
     }
 }

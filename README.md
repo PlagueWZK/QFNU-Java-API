@@ -25,7 +25,7 @@
 * **全自动会话管理**：
     * 内置 `CookieJar` 管理 Cookie。
     * **智能 Session 拦截器**：自动检测 Session 过期，并在后台静默完成“重新获取验证码 -> 登录 -> 重发请求”的流程，对上层业务无感。
-* **验证码支持**：提供 `CaptchaService` 接口，内置 Tesseract OCR 实现，并支持自定义 OCR。
+* **验证码支持**：提供 `CaptchaService` 接口，内置基于真实样本评估后收敛的默认 OCR 实现，并支持自定义 OCR。
 * **通知公告能力**：支持通知列表与详情解析（含文本与清理后的 HTML）。
 * **周课表解析**：支持从主页加载当周课表并结构化解析（含课程格子详情）。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
@@ -110,6 +110,27 @@ System.out.println("当前周次: " + schedule.currentWeek());
 System.out.println("课程数: " + schedule.courseList().size());
 ```
 
+### 获取学期理论课表
+
+```java
+import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
+import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
+
+CourseTable table = client.service(io.github.plaguewzk.qfnujavaapi.service.CourseService.class)
+        .getCourseTable(Term.current(), 1);
+
+for (Course course : table.courses()) {
+    System.out.printf("%s %s %s %s%n",
+            course.weekday(),
+            course.courseName(),
+            course.section(),
+            course.location());
+}
+```
+
+`Course` 现在包含 `weekday` 字段，表示课程位于周一到周日中的哪一天。
+
 ## 📂 项目结构 | Project Structure
 
 ```Plaintext
@@ -126,7 +147,7 @@ io.github.plaguewzk.qfnujavaapi
 │   └── entity              // 实体类 (StudentInfo, Notification, WeeklySchedule, CourseInfo, Course, CourseTable, Term)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
-│   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser(待完成), CourseTableParse(待完成))
+│   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser, CourseTableParse)
 ├── service            // 业务服务层
 │   ├── LoginService.java   // 登录逻辑
 │   ├── StudentService.java // 学生相关业务
@@ -153,7 +174,7 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 通知公告列表与详情解析
 
-- [ ] 学期理论课表查询与解析 (CourseTable/CourseParser)
+- [x] 学期理论课表查询与解析 (CourseTable/CourseParser)
 
 - [ ] 成绩查询与解析 (Grade & GPA)
 

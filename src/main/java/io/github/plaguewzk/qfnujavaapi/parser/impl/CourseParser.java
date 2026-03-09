@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,10 @@ public class CourseParser implements HtmlParser<List<Course>> {
      */
     @Override
     public List<Course> parser(String html) {
+        return parser(html, Course.Weekday.UNDEFINED);
+    }
+
+    public List<Course> parser(String html, Course.Weekday weekday) {
         if (html == null || html.trim().isEmpty()) {
             return new ArrayList<>();
         }
@@ -53,7 +58,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
             if (segment.replaceAll("<br>|&nbsp;", "").trim().isEmpty()) {
                 continue;
             }
-            Course course = parseSingleCourseFragment(segment);
+            Course course = parseSingleCourseFragment(segment, weekday);
             if (course != null) {
                 courses.add(course);
             }
@@ -68,7 +73,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
      * @param htmlFragment 切割后的 HTML 片段
      */
     @Nullable
-    private Course parseSingleCourseFragment(String htmlFragment) {
+    private Course parseSingleCourseFragment(String htmlFragment, Course.Weekday weekday) {
         Document doc = Jsoup.parseBodyFragment("<div>" + htmlFragment + "</div>");
         Element container = doc.body().child(0);
         String courseName = null;
@@ -100,7 +105,7 @@ public class CourseParser implements HtmlParser<List<Course>> {
                 .map(Course.Section::parse)
                 .orElse(null);
 
-        return new Course(courseName, weeks, section, location, teacher);
+        return new Course(Objects.requireNonNullElse(weekday, Course.Weekday.UNDEFINED), courseName, weeks, section, location, teacher);
     }
 
     /**

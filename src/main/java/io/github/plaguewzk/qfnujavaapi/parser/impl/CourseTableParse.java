@@ -32,11 +32,23 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
             throw new SystemChangedException("未找到学期理论课表");
         }
         Document doc = Jsoup.parse(html);
-        Elements courseTable = doc.select("table#kbtable td:has(div.kbcontent)");
         Set<Course> courses = new LinkedHashSet<>();
-        for (Element element : courseTable) {
-            List<Course> result = courseParser.parser(element.html());
-            courses.addAll(result);
+        Elements rows = doc.select("table#kbtable tr");
+        for (Element row : rows) {
+            Elements cells = row.children();
+            int weekdayColumn = 0;
+            for (Element cell : cells) {
+                if (!"td".equals(cell.tagName())) {
+                    continue;
+                }
+                weekdayColumn++;
+                if (weekdayColumn > 7) {
+                    break;
+                }
+                Course.Weekday weekday = Course.Weekday.ofColumnIndex(weekdayColumn);
+                List<Course> result = courseParser.parser(cell.html(), weekday);
+                courses.addAll(result);
+            }
         }
         int week;
         Element selectedWeek = doc.selectFirst("select#zc option[selected]");

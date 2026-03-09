@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
  *
  * @author PlagueWZK
  */
-@SuppressWarnings("ClassCanBeRecord")
 @Slf4j
 public class LoginService {
     private final QFNUContext context;
