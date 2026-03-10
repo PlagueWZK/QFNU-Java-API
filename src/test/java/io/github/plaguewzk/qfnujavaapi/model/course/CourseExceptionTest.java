@@ -1,4 +1,4 @@
-package io.github.plaguewzk.qfnujavaapi.model.entity;
+package io.github.plaguewzk.qfnujavaapi.model.course;
 
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
 import org.junit.jupiter.api.Test;
@@ -11,11 +11,11 @@ class CourseExceptionTest {
 
     @Test
     void shouldRejectInvalidWeekRange() {
-        assertThrows(InvalidParameterException.class, () -> new Course.Weeks(List.of(0)));
+        assertThrows(InvalidParameterException.class, () -> new Weeks(List.of(0)));
     }
 
     @Test
     void shouldRejectMalformedWeekString() {
-        assertThrows(InvalidParameterException.class, () -> Course.Weeks.parse("1-a"));
+        assertThrows(InvalidParameterException.class, () -> Weeks.parse("1-a"));
     }
 }

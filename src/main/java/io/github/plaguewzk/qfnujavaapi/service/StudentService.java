@@ -3,7 +3,7 @@ package io.github.plaguewzk.qfnujavaapi.service;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
-import io.github.plaguewzk.qfnujavaapi.model.entity.StudentInfo;
+import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.StudentInfoParser;
 
 import java.util.Map;

@@ -1,6 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
-import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
+import io.github.plaguewzk.qfnujavaapi.model.notification.Notification;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;

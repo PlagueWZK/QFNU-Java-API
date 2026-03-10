@@ -1,4 +1,4 @@
-package io.github.plaguewzk.qfnujavaapi.model.entity;
+package io.github.plaguewzk.qfnujavaapi.model.course;
 
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
 import org.jetbrains.annotations.NotNull;
@@ -8,10 +8,10 @@ import java.time.LocalDate;
 public record Term(int startYear, int endYear, int termIndex) {
     public Term {
         if (endYear - startYear != 1) {
-            throw new InvalidParameterException("学期id年份必须连续(如2025-2026)");
+            throw new InvalidParameterException("学期年份必须连续，例如 2025-2026");
         }
         if (termIndex < 1 || termIndex > 2) {
-            throw new InvalidParameterException("学期id必须为1或2");
+            throw new InvalidParameterException("学期序号必须为 1 或 2");
         }
     }
 
@@ -21,7 +21,7 @@ public record Term(int startYear, int endYear, int termIndex) {
 
     public static Term parse(String termId) {
         if (termId == null || termId.isBlank()) {
-            throw new InvalidParameterException("学期id不能为空");
+            throw new InvalidParameterException("学期 id 不能为空");
         }
         try {
             String[] parts = termId.split("-");
@@ -30,8 +30,8 @@ public record Term(int startYear, int endYear, int termIndex) {
                     Integer.parseInt(parts[1]),
                     Integer.parseInt(parts[2])
             );
-        } catch (Exception e) {
-            throw new InvalidParameterException("学期id格式错误, 应该为yyyy-yyyy-n", e);
+        } catch (Exception exception) {
+            throw new InvalidParameterException("学期 id 格式错误，应为 yyyy-yyyy-n", exception);
         }
     }
 

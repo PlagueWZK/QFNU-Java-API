@@ -1,7 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.parser;
 
-import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
-import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.course.Weekday;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +61,7 @@ class CourseTableParseTest {
         CourseTable courseTable = parser.parser(html);
 
         assertEquals(2, courseTable.courses().size());
-        assertEquals(Course.Weekday.TUESDAY, courseTable.courses().get(0).weekday());
-        assertEquals(Course.Weekday.THURSDAY, courseTable.courses().get(1).weekday());
+        assertEquals(Weekday.TUESDAY, courseTable.courses().get(0).weekday());
+        assertEquals(Weekday.THURSDAY, courseTable.courses().get(1).weekday());
     }
 }

@@ -62,7 +62,7 @@
 
 ```java
 import io.github.plaguewzk.qfnujavaapi.QFNUClient;
-import io.github.plaguewzk.qfnujavaapi.model.entity.StudentInfo;
+import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
 
 public class Main {
     public static void main(String[] args) {
@@ -90,7 +90,7 @@ public class Main {
 ### 获取通知公告
 
 ```java
-import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
+import io.github.plaguewzk.qfnujavaapi.model.notification.Notification;
 import java.util.List;
 
 List<Notification> list = client.service(io.github.plaguewzk.qfnujavaapi.service.NotificationService.class).getList();
@@ -102,7 +102,7 @@ for (Notification item : list) {
 ### 获取本周课表（主页当周课表）
 
 ```java
-import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
+import io.github.plaguewzk.qfnujavaapi.model.course.WeeklySchedule;
 
 WeeklySchedule schedule = client.service(io.github.plaguewzk.qfnujavaapi.service.CourseService.class)
         .getCurrentWeeklyScheduleFromMainPage();
@@ -113,9 +113,9 @@ System.out.println("课程数: " + schedule.courseList().size());
 ### 获取学期理论课表
 
 ```java
-import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
-import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
-import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
+import io.github.plaguewzk.qfnujavaapi.model.course.Course;
+import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.course.Term;
 
 CourseTable table = client.service(io.github.plaguewzk.qfnujavaapi.service.CourseService.class)
         .getCourseTable(Term.current(), 1);
@@ -144,7 +144,9 @@ io.github.plaguewzk.qfnujavaapi
 │   ├── SessionInterceptor.java // 会话拦截器
 │   └── QFNUCookieJar.java   // Cookie管理
 ├── model              // 数据模型
-│   └── entity              // 实体类 (StudentInfo, Notification, WeeklySchedule, CourseInfo, Course, CourseTable, Term)
+│   ├── course              // 课程域模型 (Course, Weekday, Weeks, Section, SectionConstant, CourseInfo, CourseTable, Term, WeeklySchedule)
+│   ├── notification        // 通知域模型 (Notification, NotificationDetail)
+│   └── student             // 学生域模型 (StudentInfo)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
 │   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser, CourseTableParse)

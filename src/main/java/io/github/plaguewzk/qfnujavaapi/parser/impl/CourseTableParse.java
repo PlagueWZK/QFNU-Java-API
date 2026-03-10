@@ -2,9 +2,10 @@ package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
-import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
-import io.github.plaguewzk.qfnujavaapi.model.entity.CourseTable;
-import io.github.plaguewzk.qfnujavaapi.model.entity.Term;
+import io.github.plaguewzk.qfnujavaapi.model.course.Course;
+import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.course.Term;
+import io.github.plaguewzk.qfnujavaapi.model.course.Weekday;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -45,7 +46,7 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
                 if (weekdayColumn > 7) {
                     break;
                 }
-                Course.Weekday weekday = Course.Weekday.ofColumnIndex(weekdayColumn);
+                Weekday weekday = Weekday.ofColumnIndex(weekdayColumn);
                 List<Course> result = courseParser.parser(cell.html(), weekday);
                 courses.addAll(result);
             }

@@ -32,3 +32,4 @@ build/
 .vscode/
 
 /src/test/java/io/github/plaguewzk/qfnujavaapi/local/
+/src/main/java/io/github/plaguewzk/qfnujavaapi/local/

@@ -3,7 +3,8 @@ package io.github.plaguewzk.qfnujavaapi.service;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
-import io.github.plaguewzk.qfnujavaapi.model.entity.Notification;
+import io.github.plaguewzk.qfnujavaapi.model.notification.Notification;
+import io.github.plaguewzk.qfnujavaapi.model.notification.NotificationDetail;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationDetailParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationListParser;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class NotificationService {
             return notification;
         }
         String original = qfnuExecutor.executeGet(QFNUAPI.MAIN_INDEX_NOTIFICATION, Map.of("id", id));
-        NotificationDetailParser.DetailResult detailResult = notificationDetailParser.parser(original);
+        NotificationDetail detailResult = notificationDetailParser.parser(original);
         return notification.withDetails(detailResult.publisher(), detailResult.dateTime(), detailResult.content(), detailResult.html());
     }
 }

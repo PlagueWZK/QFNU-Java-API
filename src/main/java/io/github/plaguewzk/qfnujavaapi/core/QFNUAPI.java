@@ -32,6 +32,10 @@ public enum QFNUAPI {
     MAIN_INDEX_NOTIFICATION(BASE_URL.value + "/framework/main_index_tzgg.jsp"),
 
     //学期理论课表
-    STUDENT_COURSE_LIST(BASE_URL.value + "/xskb/xskb_list.do");
+    STUDENT_COURSE_LIST(BASE_URL.value + "/xskb/xskb_list.do"),
+
+    //成绩查询
+    GRADE_INQUIRY(BASE_URL.value + "/kscj/cjcx_list");
+
     public final String value;
 }

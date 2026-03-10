@@ -1,8 +1,8 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
+import io.github.plaguewzk.qfnujavaapi.model.notification.NotificationDetail;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import io.github.plaguewzk.qfnujavaapi.util.Util;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,16 +15,16 @@ import java.util.Optional;
  *
  * @author PlagueWZK
  */
-@Slf4j
-public class NotificationDetailParser implements HtmlParser<NotificationDetailParser.DetailResult> {
+public class NotificationDetailParser implements HtmlParser<NotificationDetail> {
 
     @Override
-    public DetailResult parser(String html) {
+    public NotificationDetail parser(String html) {
         Document doc = Jsoup.parse(html);
 
         Optional<Element> bodyOpt = Optional.of(doc.body());
-        Optional<Elements> span = bodyOpt.map(b -> b.selectFirst("p.desc"))
+        Optional<Elements> span = bodyOpt.map(body -> body.selectFirst("p.desc"))
                 .map(desc -> desc.select("span"));
+
         String publisher = span.filter(spans -> !spans.isEmpty())
                 .map(spans -> spans.get(0).text().trim())
                 .orElse("未知发布者");
@@ -34,10 +34,7 @@ public class NotificationDetailParser implements HtmlParser<NotificationDetailPa
 
         Optional<Element> contentOpt = bodyOpt.map(body -> body.selectFirst("div.content"));
         String content = contentOpt.map(Element::text).orElse("");
-        String contentHtml = contentOpt.map(e -> Util.cleanHtml(e.html())).orElse("");
-        return new DetailResult(publisher, dateTime, content, contentHtml);
-    }
-
-    public record DetailResult(String publisher, String dateTime, String content, String html) {
+        String contentHtml = contentOpt.map(element -> Util.cleanHtml(element.html())).orElse("");
+        return new NotificationDetail(publisher, dateTime, content, contentHtml);
     }
 }

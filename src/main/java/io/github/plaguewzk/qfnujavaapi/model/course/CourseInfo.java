@@ -1,4 +1,4 @@
-package io.github.plaguewzk.qfnujavaapi.model.entity;
+package io.github.plaguewzk.qfnujavaapi.model.course;
 
 public record CourseInfo(String courseName,
                          String credits,
@@ -10,5 +10,4 @@ public record CourseInfo(String courseName,
                          Integer startNode,
                          Integer endNode,
                          Integer week) {
-
 }

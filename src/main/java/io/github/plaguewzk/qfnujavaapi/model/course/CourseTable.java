@@ -1,4 +1,4 @@
-package io.github.plaguewzk.qfnujavaapi.model.entity;
+package io.github.plaguewzk.qfnujavaapi.model.course;
 
 import java.util.List;
 

@@ -1,7 +1,10 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
-import io.github.plaguewzk.qfnujavaapi.model.entity.Course;
+import io.github.plaguewzk.qfnujavaapi.model.course.Course;
+import io.github.plaguewzk.qfnujavaapi.model.course.Section;
+import io.github.plaguewzk.qfnujavaapi.model.course.Weekday;
+import io.github.plaguewzk.qfnujavaapi.model.course.Weeks;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -21,31 +24,23 @@ import java.util.regex.Pattern;
  *
  * @author PlagueWZK
  */
-@SuppressWarnings("OptionalOfNullableMisuse")
 @Slf4j
 public class CourseParser implements HtmlParser<List<Course>> {
 
     private static final Pattern SPLIT_PATTERN = Pattern.compile("-{4,}");
 
-    /**
-     * 解析课程列表（处理单个单元格内包含多门课的情况）
-     *
-     * @param html 包含课程信息的td标签html
-     * @return 返回Course列表，如果没有课则返回空列表
-     */
     @Override
     public List<Course> parser(String html) {
-        return parser(html, Course.Weekday.UNDEFINED);
+        return parser(html, Weekday.UNDEFINED);
     }
 
-    public List<Course> parser(String html, Course.Weekday weekday) {
+    public List<Course> parser(String html, Weekday weekday) {
         if (html == null || html.trim().isEmpty()) {
             return new ArrayList<>();
         }
 
         Document doc = Jsoup.parseBodyFragment(html);
         Element contentDiv = doc.selectFirst(".kbcontent");
-
         if (contentDiv == null) {
             return new ArrayList<>();
         }
@@ -63,19 +58,14 @@ public class CourseParser implements HtmlParser<List<Course>> {
                 courses.add(course);
             }
         }
-
         return courses;
     }
 
-    /**
-     * 解析单个课程片段
-     *
-     * @param htmlFragment 切割后的 HTML 片段
-     */
     @Nullable
-    private Course parseSingleCourseFragment(String htmlFragment, Course.Weekday weekday) {
+    private Course parseSingleCourseFragment(String htmlFragment, Weekday weekday) {
         Document doc = Jsoup.parseBodyFragment("<div>" + htmlFragment + "</div>");
         Element container = doc.body().child(0);
+
         String courseName = null;
         for (TextNode node : container.textNodes()) {
             String text = node.text().trim();
@@ -88,29 +78,28 @@ public class CourseParser implements HtmlParser<List<Course>> {
         if (courseName == null || courseName.trim().isEmpty()) {
             return null;
         }
-        String teacher = extractText(container, "老师");
-        String location = extractText(container, "教室");
-        String rawTime = extractText(container, "周次(节次)");
+
+        String teacher = extractText(container, "鑰佸笀");
+        String location = extractText(container, "鏁欏");
+        String rawTime = extractText(container, "鍛ㄦ(鑺傛)");
         if (rawTime == null || rawTime.isBlank()) {
             throw new ParsingErrorException("课程解析失败：缺少周次(节次)信息，课程名=" + courseName);
         }
-        Course.Weeks weeks = Optional.ofNullable(rawTime)
-                .map(t -> t.split("\\[")[0])
-                .map(t -> t.replace("(周)", ""))
+
+        Weeks weeks = Optional.of(rawTime)
+                .map(text -> text.split("\\[")[0])
+                .map(text -> text.replace("(鍛?", ""))
                 .map(String::trim)
-                .map(Course.Weeks::parse)
+                .map(Weeks::parse)
                 .orElse(null);
 
-        Course.Section section = Optional.ofNullable(rawTime)
-                .map(Course.Section::parse)
+        Section section = Optional.of(rawTime)
+                .map(Section::parse)
                 .orElse(null);
 
-        return new Course(Objects.requireNonNullElse(weekday, Course.Weekday.UNDEFINED), courseName, weeks, section, location, teacher);
+        return new Course(Objects.requireNonNullElse(weekday, Weekday.UNDEFINED), courseName, weeks, section, location, teacher);
     }
 
-    /**
-     * 辅助提取方法
-     */
     @Nullable
     private String extractText(Element parent, String title) {
         return Optional.ofNullable(parent.selectFirst("font[title='" + title + "']"))

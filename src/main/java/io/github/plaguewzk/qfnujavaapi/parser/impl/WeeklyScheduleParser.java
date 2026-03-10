@@ -2,8 +2,8 @@ package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
-import io.github.plaguewzk.qfnujavaapi.model.entity.CourseInfo;
-import io.github.plaguewzk.qfnujavaapi.model.entity.WeeklySchedule;
+import io.github.plaguewzk.qfnujavaapi.model.course.CourseInfo;
+import io.github.plaguewzk.qfnujavaapi.model.course.WeeklySchedule;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
