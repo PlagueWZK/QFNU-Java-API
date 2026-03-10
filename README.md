@@ -36,11 +36,12 @@
 * `QFNUAPIException`：SDK 运行时异常总基类。
 * `InvalidParameterException`：调用方传入的参数不合法。
 * `AuthenticationException`：认证与会话相关异常基类。
-* `AccountOrPasswordErrorException`：账号或密码错误。
+* `InvalidCredentialsException`：账号或密码错误。
 * `LoginFailedException`：登录流程重试耗尽、线程中断或依赖失败。
 * `SessionRefreshException`：会话过期后自动续期失败。
-* `SystemNetworkException`：网络请求失败或响应读取失败。
-* `SystemChangedException`：教务系统页面结构变化，现有解析器无法继续工作。
+* `NetworkException`：网络请求失败、响应异常或响应体读取失败。
+* `ParseException`：页面解析相关异常基类。
+* `PageStructureException`：教务系统页面结构变化，现有解析器无法继续工作。
 * `ParsingErrorException`：页面结构仍可访问，但具体字段格式不符合预期。
 * `CaptchaException`：验证码能力异常基类。
 * `CaptchaInitializationException`：OCR 引擎初始化失败。

@@ -1,6 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
-import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
+import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -18,7 +18,7 @@ public class SjmsParser implements HtmlParser<String> {
     public String parser(String html) {
         Element option = Jsoup.parse(html).selectFirst("select[name='sjms'] option[value]");
         if (option == null) {
-            throw new SystemChangedException("未找到sjms标签");
+            throw new PageStructureException("未找到sjms标签");
         }
         return option.val().trim();
     }

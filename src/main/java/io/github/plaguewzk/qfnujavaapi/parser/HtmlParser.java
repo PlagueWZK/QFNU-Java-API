@@ -1,6 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi.parser;
 
-import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
+import io.github.plaguewzk.qfnujavaapi.exception.ParseException;
 
 /**
  * Created on 2025/12/31 00:18
@@ -15,7 +15,7 @@ public interface HtmlParser<T> {
      *
      * @param html 页面源码
      * @return 解析后的对象
-     * @throws QFNUAPIException 如果解析过程中发生结构变更、内容格式异常或其他严重错误
+     * @throws ParseException 如果解析过程中发生结构变更、内容格式异常或其他严重错误
      */
     T parser(String html);
 }

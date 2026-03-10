@@ -1,7 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.parser;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
+import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseInfoParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.StudentInfoParser;
@@ -15,7 +15,7 @@ class ParserExceptionTest {
     void shouldThrowSystemChangedWhenStudentInfoContainerMissing() {
         StudentInfoParser parser = new StudentInfoParser();
 
-        assertThrows(SystemChangedException.class, () -> parser.parser("<html><body></body></html>"));
+        assertThrows(PageStructureException.class, () -> parser.parser("<html><body></body></html>"));
     }
 
     @Test

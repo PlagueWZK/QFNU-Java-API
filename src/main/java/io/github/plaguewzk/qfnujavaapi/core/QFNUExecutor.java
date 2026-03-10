@@ -1,9 +1,8 @@
 package io.github.plaguewzk.qfnujavaapi.core;
 
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemNetworkException;
-import io.github.plaguewzk.qfnujavaapi.exception.UnknownErrorException;
+import io.github.plaguewzk.qfnujavaapi.exception.NetworkException;
+import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -61,7 +60,7 @@ public record QFNUExecutor(OkHttpClient client) {
             return body != null ? body.bytes() : new byte[0];
         } catch (IOException e) {
             log.error("转换字节数组失败[{}]: {}", request.url(), e.getMessage());
-            throw new SystemNetworkException("读取响应字节流失败: " + request.url(), e);
+            throw new NetworkException("读取响应字节流失败: " + request.url(), e);
         }
     }
 
@@ -71,14 +70,14 @@ public record QFNUExecutor(OkHttpClient client) {
             return body != null ? body.string() : "";
         } catch (IOException e) {
             log.error("转换字符串失败[{}]: {}", request.url(), e.getMessage());
-            throw new SystemNetworkException("读取响应文本失败: " + request.url(), e);
+            throw new NetworkException("读取响应文本失败: " + request.url(), e);
         }
     }
 
     public String buildUrl(QFNUAPI baseApi, Map<String, String> queryParameters) {
         HttpUrl parsed = HttpUrl.parse(baseApi.value);
         if (parsed == null) {
-            throw new SystemChangedException("API 地址非法，无法构建请求: " + baseApi);
+            throw new PageStructureException("API 地址非法，无法构建请求: " + baseApi);
         }
         HttpUrl.Builder builder = parsed.newBuilder();
         if (queryParameters != null) {
@@ -92,17 +91,17 @@ public record QFNUExecutor(OkHttpClient client) {
             Response response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
                 response.close();
-                throw new SystemNetworkException("教务系统响应异常: " + response.code());
+                throw new NetworkException("教务系统响应异常: " + response.code());
             }
             log.debug("请求执行成功: [{}]", request.url());
             return response;
         } catch (IOException e) {
             log.error("网络请求异常[{}]: {}", request.url(), e.getMessage());
-            throw new SystemNetworkException("请求教务系统失败: " + request.url(), e);
+            throw new NetworkException("请求教务系统失败: " + request.url(), e);
         } catch (QFNUAPIException e) {
             throw e;
         } catch (Exception e) {
-            throw new UnknownErrorException("执行请求时发生未知错误: " + request.url(), e);
+            throw new QFNUAPIException("执行请求时发生未知错误: " + request.url(), e);
         }
     }
 }

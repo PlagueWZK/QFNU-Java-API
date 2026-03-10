@@ -1,6 +1,9 @@
 package io.github.plaguewzk.qfnujavaapi.exception;
 
 public class InvalidParameterException extends QFNUAPIException {
+    public InvalidParameterException() {
+    }
+
     public InvalidParameterException(String message) {
         super(message);
     }
@@ -11,8 +14,5 @@ public class InvalidParameterException extends QFNUAPIException {
 
     public InvalidParameterException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    public InvalidParameterException() {
     }
 }

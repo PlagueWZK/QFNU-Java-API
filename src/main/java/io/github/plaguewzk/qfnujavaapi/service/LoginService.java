@@ -4,11 +4,10 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
-import io.github.plaguewzk.qfnujavaapi.exception.AccountOrPasswordErrorException;
+import io.github.plaguewzk.qfnujavaapi.exception.InvalidCredentialsException;
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
 import io.github.plaguewzk.qfnujavaapi.exception.LoginFailedException;
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
-import io.github.plaguewzk.qfnujavaapi.exception.UnknownErrorException;
 import io.github.plaguewzk.qfnujavaapi.service.impl.DefaultCaptchaService;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Request;
@@ -71,14 +70,14 @@ public class LoginService {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new LoginFailedException("登录线程被中断", e);
-            } catch (AccountOrPasswordErrorException e) {
+            } catch (InvalidCredentialsException e) {
                 throw e;
             } catch (QFNUAPIException e) {
                 lastException = e;
                 log.error("登录过程出错: {}", e.getMessage());
                 count++;
             } catch (Exception e) {
-                lastException = new UnknownErrorException("登录过程发生未知异常", e);
+                lastException = new QFNUAPIException("登录过程发生未知异常", e);
                 log.error("未知异常: {}", e.getMessage());
                 count++;
             }
@@ -120,7 +119,7 @@ public class LoginService {
      * @param userAccount  学号
      * @param userPassword 密码
      * @param captcha      验证码
-     * @return 如果登录成功，返回true; 如果验证码错误或登录失败，返回false; 如果账号或密码错误,抛出{@link AccountOrPasswordErrorException}
+     * @return 如果登录成功，返回true; 如果验证码错误或登录失败，返回false; 如果账号或密码错误,抛出{@link InvalidCredentialsException}
      */
     private boolean performLoginRequest(String userAccount, String userPassword, String captcha) {
         String encoded = Base64.getEncoder().encodeToString(userAccount.getBytes()) +
@@ -138,7 +137,7 @@ public class LoginService {
         }
         if (html.contains("密码错误") || html.contains("账号不存在")) {
             log.error("服务端返回：账号或密码错误");
-            throw new AccountOrPasswordErrorException("账号或者密码错误");
+            throw new InvalidCredentialsException("账号或者密码错误");
         }
         return html.contains("退出");
     }

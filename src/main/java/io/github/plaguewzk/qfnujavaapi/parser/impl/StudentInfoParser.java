@@ -1,7 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
+import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class StudentInfoParser implements HtmlParser<StudentInfo> {
         Element container = doc.selectFirst(".middletopttxlr");
         if (container == null) {
             log.error("解析学生信息发生错误");
-            throw new SystemChangedException("学生信息页面结构已变化：未找到 .middletopttxlr 容器");
+            throw new PageStructureException("学生信息页面结构已变化：未找到 .middletopttxlr 容器");
         }
         String name = null;
         String studentId = null;
@@ -37,7 +37,7 @@ public class StudentInfoParser implements HtmlParser<StudentInfo> {
             Element titleElement = row.selectFirst(".middletopdwxxtit");
             Element valueElement = row.selectFirst(".middletopdwxxcont");
             if (titleElement == null || valueElement == null) {
-                throw new SystemChangedException("学生信息页面结构已变化：缺少字段标题或内容节点");
+                throw new PageStructureException("学生信息页面结构已变化：缺少字段标题或内容节点");
             }
             String title = titleElement.text().trim();
             String value = valueElement.text().trim();

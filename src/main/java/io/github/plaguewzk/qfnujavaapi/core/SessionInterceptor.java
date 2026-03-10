@@ -1,8 +1,8 @@
 package io.github.plaguewzk.qfnujavaapi.core;
 
 import io.github.plaguewzk.qfnujavaapi.exception.QFNUAPIException;
+import io.github.plaguewzk.qfnujavaapi.exception.NetworkException;
 import io.github.plaguewzk.qfnujavaapi.exception.SessionRefreshException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemNetworkException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -73,7 +73,7 @@ public class SessionInterceptor implements Interceptor {
             if (preview.contains("请输入账号") && preview.contains("请输入密码") && preview.contains("请输入验证码")) return true;
         } catch (IOException e) {
             log.warn("检测 Session 过期时读取 Body 失败");
-            throw new SystemNetworkException("检测 Session 状态时读取响应体失败", e);
+            throw new NetworkException("检测 Session 状态时读取响应体失败", e);
         }
         return false;
     }

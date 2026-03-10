@@ -1,7 +1,7 @@
 package io.github.plaguewzk.qfnujavaapi.parser.impl;
 
 import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
-import io.github.plaguewzk.qfnujavaapi.exception.SystemChangedException;
+import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.model.course.Course;
 import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
 import io.github.plaguewzk.qfnujavaapi.model.course.Term;
@@ -26,7 +26,7 @@ public class CourseTableParse implements HtmlParser<CourseTable> {
     @Override
     public CourseTable parser(String html) {
         if (!html.contains("学期理论课表")) {
-            throw new SystemChangedException("未找到学期理论课表");
+            throw new PageStructureException("未找到学期理论课表");
         }
         Document doc = Jsoup.parse(html);
         Set<Course> courses = new LinkedHashSet<>();
