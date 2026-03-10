@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public class CourseParser implements HtmlParser<List<Course>> {
 
     private static final Pattern SPLIT_PATTERN = Pattern.compile("-{4,}");
+    private static final Pattern WEEKS_SUFFIX_PATTERN = Pattern.compile("\\(周\\)?\\s*$");
 
     @Override
     public List<Course> parser(String html) {
@@ -79,16 +80,16 @@ public class CourseParser implements HtmlParser<List<Course>> {
             return null;
         }
 
-        String teacher = extractText(container, "鑰佸笀");
-        String location = extractText(container, "鏁欏");
-        String rawTime = extractText(container, "鍛ㄦ(鑺傛)");
+        String teacher = extractText(container, "老师");
+        String location = extractText(container, "教室");
+        String rawTime = extractText(container, "周次(节次)");
         if (rawTime == null || rawTime.isBlank()) {
             throw new ParsingErrorException("课程解析失败：缺少周次(节次)信息，课程名=" + courseName);
         }
 
         Weeks weeks = Optional.of(rawTime)
                 .map(text -> text.split("\\[")[0])
-                .map(text -> text.replace("(鍛?", ""))
+                .map(text -> WEEKS_SUFFIX_PATTERN.matcher(text).replaceFirst(""))
                 .map(String::trim)
                 .map(Weeks::parse)
                 .orElse(null);
