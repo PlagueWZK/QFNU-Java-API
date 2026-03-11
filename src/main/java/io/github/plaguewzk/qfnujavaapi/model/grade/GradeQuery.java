@@ -72,7 +72,7 @@ public final class GradeQuery {
         }
 
         public Builder courseNature(CourseNature kcxz) {
-            this.kcxz = kcxz.displayName;
+            this.kcxz = kcxz.value;
             return this;
         }
 
@@ -81,8 +81,8 @@ public final class GradeQuery {
             return this;
         }
 
-        public Builder displayMode(String xsfs) {
-            this.xsfs = xsfs;
+        public Builder displayMode(GradeDisplayMode xsfs) {
+            this.xsfs = xsfs.value;
             return this;
         }
 
