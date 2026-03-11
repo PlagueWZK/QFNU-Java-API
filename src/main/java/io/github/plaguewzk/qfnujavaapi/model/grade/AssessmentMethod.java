@@ -22,6 +22,11 @@ public enum AssessmentMethod {
                 return method;
             }
         }
-        return null;
+        return UNDEFINED;
+    }
+
+    @Override
+    public String toString() {
+        return this.displayName;
     }
 }

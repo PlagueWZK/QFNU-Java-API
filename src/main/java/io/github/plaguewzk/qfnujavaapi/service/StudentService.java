@@ -14,12 +14,10 @@ import java.util.Map;
  * @author PlagueWZK
  */
 public class StudentService {
-    private final QFNUContext context;
     private final QFNUExecutor qfnuExecutor;
     private final StudentInfoParser infoParser = new StudentInfoParser();
 
     public StudentService(QFNUContext context) {
-        this.context = context;
         this.qfnuExecutor = context.executor();
     }
 

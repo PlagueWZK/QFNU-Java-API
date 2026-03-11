@@ -8,7 +8,7 @@ package io.github.plaguewzk.qfnujavaapi.model.grade;
 
 public enum CourseAttributes {
     REQUIRED("必修"),
-    ELECTIVE("任选"),
+    OPTIONAL("任选"),
     GENERAL_ELECTIVE("公选"),
     UNDEFINED("未定义");
 
@@ -16,5 +16,22 @@ public enum CourseAttributes {
 
     CourseAttributes(String displayName) {
         this.displayName = displayName;
+    }
+
+    public static CourseAttributes fromDisplayName(String displayName) {
+        if (displayName == null || displayName.isBlank()) {
+            return UNDEFINED;
+        }
+        for (CourseAttributes value : values()) {
+            if (value.displayName.equals(displayName)) {
+                return value;
+            }
+        }
+        return UNDEFINED;
+    }
+
+    @Override
+    public String toString() {
+        return this.displayName;
     }
 }
