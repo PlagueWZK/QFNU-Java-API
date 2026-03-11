@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.plaguewzk</groupId>
-    <artifactId>QFNU-Java-API</artifactId>
+    <artifactId>qfnu-java-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>QFNU-Java-API</name>
-    <description>QFNU-Java-API</description>
+    <name>qfnu-java-api</name>
+    <description>qfnu-java-api</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

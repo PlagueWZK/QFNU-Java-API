@@ -81,7 +81,7 @@ public class DefaultCaptchaService implements CaptchaService {
             Path filePath = dirPath.resolve(DATA_FILE_NAME);
 
             if (Files.notExists(filePath) || Files.size(filePath) == 0) {
-                log.info("正在释放训练数据到临时目录: {}", filePath.toAbsolutePath());
+                log.info("OCR: 正在释放训练数据到临时目录: {}", filePath.toAbsolutePath());
                 try (InputStream in = this.getClass().getClassLoader().getResourceAsStream("tessdata/" + DATA_FILE_NAME)) {
                     if (in == null) {
                         throw new CaptchaInitializationException("验证码识别引擎初始化失败：Jar 包内缺少 tessdata/" + DATA_FILE_NAME);

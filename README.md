@@ -59,6 +59,61 @@
 
 ## 🚀 快速开始 | Quick Start
 
+### 作为 Maven 依赖引入
+
+如果本项目已经发布到 Maven 仓库，下游项目可直接在 `pom.xml` 中添加依赖：
+
+```xml
+<dependency>
+    <groupId>io.github.plaguewzk</groupId>
+    <artifactId>qfnu-java-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+当前项目默认产物是普通 Maven 库 JAR，而不是胖 JAR。对 SDK 来说这是正常的：下游项目通过 Maven 引入时，Maven 会根据本项目的 `pom.xml` 自动解析并拉取传递依赖，例如 `okhttp`、`jsoup`、`tess4j`、`jna`、`lept4j` 等。
+
+### 未发布到远程仓库时的本地安装
+
+如果项目还没有发布到 Maven Central、GitHub Packages 或私有仓库，下游开发者仍然可以在本地使用，但推荐走 Maven 本地仓库安装流程，而不是只把一个 JAR 文件随手放进 IDE 的外部库。
+
+#### 方式一：推荐，直接从源码安装到本地 Maven 仓库
+
+```powershell
+git clone https://github.com/PlagueWZK/QFNU-Java-API.git
+cd QFNU-Java-API
+mvn -DskipTests install
+```
+
+执行后，Maven 会把当前 SDK 的 `jar` 和 `pom` 一并安装到开发者本机的本地仓库中。
+
+```xml
+<dependency>
+    <groupId>io.github.plaguewzk</groupId>
+    <artifactId>qfnu-java-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+这种方式下，Maven 能识别本 SDK 的传递依赖。
+
+#### 方式二：只有构建产物时，手动安装 `jar + pom`
+
+如果没有完整源码，但提供了构建出的 JAR 和对应的 `pom.xml`，也可以手动安装：
+
+```powershell
+mvn install:install-file -Dfile=qfnu-java-api-0.0.1-SNAPSHOT.jar -DpomFile=pom.xml
+```
+
+安装完成后，下游项目同样可以通过 Maven 坐标引用该 SDK，Maven 也能根据 `pom.xml` 继续解析它的传递依赖。
+
+#### 重要说明
+
+- 仅把 `qfnu-java-api-0.0.1-SNAPSHOT.jar` 手动复制到本地 Maven 仓库目录，通常不够。
+- 仅把该 JAR 添加到 IDE 的“外部依赖库”，通常也不够。
+- 原因是 Maven 解析传递依赖依赖于该构件对应的 `pom` 元数据；只有 JAR，没有 `pom`，Maven 不知道它还依赖哪些上游库。
+- 如果只有 JAR 而没有对应 `pom`，那就需要下游项目自行手动补齐所有运行时依赖。
+
 ### 获取学生信息
 
 ```java
