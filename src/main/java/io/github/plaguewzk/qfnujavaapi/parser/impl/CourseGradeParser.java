@@ -7,6 +7,7 @@ import io.github.plaguewzk.qfnujavaapi.model.grade.CourseAttributes;
 import io.github.plaguewzk.qfnujavaapi.model.grade.CourseGrade;
 import io.github.plaguewzk.qfnujavaapi.model.grade.CourseNature;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,6 +23,7 @@ import java.util.function.Function;
  *
  * @author PlagueWZK
  */
+@Slf4j
 public class CourseGradeParser implements HtmlParser<List<CourseGrade>> {
 
     @Override
@@ -31,9 +33,13 @@ public class CourseGradeParser implements HtmlParser<List<CourseGrade>> {
         ArrayList<CourseGrade> grades = new ArrayList<>();
 
         for (int rowIndex = 0; rowIndex < gradeRows.size(); rowIndex++) {
-            Element row = gradeRows.get(rowIndex);
-            Elements cells = row.select("> td");
-            grades.add(parseGradeRow(cells, rowIndex + 1));
+            try {
+                Element row = gradeRows.get(rowIndex);
+                Elements cells = row.select("> td");
+                grades.add(parseGradeRow(cells, rowIndex + 1));
+            } catch (ParsingErrorException e) {
+                log.error(e.getMessage(), e);
+            }
         }
         return grades;
     }
