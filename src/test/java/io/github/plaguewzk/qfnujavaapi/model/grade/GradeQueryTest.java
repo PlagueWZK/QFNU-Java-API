@@ -28,13 +28,13 @@ class GradeQueryTest {
     void shouldBuildCustomQueryParameters() {
         GradeQuery query = GradeQuery.builder()
                 .startSemester(Term.parse("2025-2026-1"))
-                .courseNature(CourseNature.fromDisplayName("必修"))
+                .courseNature(CourseNature.PUBLIC_REQUIRED_COURSES)
                 .courseName("软件工程")
-                .displayMode("all")
+                .displayMode(GradeDisplayMode.ALL)
                 .build();
 
         assertEquals("2025-2026-1", query.kksj());
-        assertEquals("必修", query.kcxz());
+        assertEquals("16", query.kcxz());
         assertEquals("软件工程", query.kcmc());
         assertEquals("all", query.xsfs());
     }

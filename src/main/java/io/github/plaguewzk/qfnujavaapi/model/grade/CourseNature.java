@@ -61,6 +61,18 @@ public enum CourseNature {
         return UNDEFINED;
     }
 
+    public static CourseNature fromValue(String value) {
+        if (value == null || value.isBlank()) {
+            return UNDEFINED;
+        }
+        for (CourseNature courseNature : values()) {
+            if (courseNature.value.equals(value)) {
+                return courseNature;
+            }
+        }
+        return UNDEFINED;
+    }
+
     @Override
     public String toString() {
         return this.displayName;
