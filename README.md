@@ -76,9 +76,8 @@
 
 ### 未发布到远程仓库时的本地安装
 
-如果项目还没有发布到 Maven Central、GitHub Packages 或私有仓库，下游开发者仍然可以在本地使用，但推荐走 Maven 本地仓库安装流程，而不是只把一个 JAR 文件随手放进 IDE 的外部库。
-
-#### 方式一：推荐，直接从源码安装到本地 Maven 仓库
+如果项目还没有发布到 Maven Central、GitHub Packages 或私有仓库，推荐走 Maven 本地仓库安装流程
+#### 直接从源码安装到本地 Maven 仓库
 
 ```powershell
 git clone https://github.com/PlagueWZK/QFNU-Java-API.git
@@ -96,21 +95,9 @@ mvn -DskipTests install
 </dependency>
 ```
 
-这种方式下，Maven 能识别本 SDK 的传递依赖。
-
-#### 方式二：只有构建产物时，手动安装 `jar + pom`
-
-如果没有完整源码，但提供了构建出的 JAR 和对应的 `pom.xml`，也可以手动安装：
-
-```powershell
-mvn install:install-file -Dfile=qfnu-java-api-0.0.1-SNAPSHOT.jar -DpomFile=pom.xml
-```
-
-安装完成后，下游项目同样可以通过 Maven 坐标引用该 SDK，Maven 也能根据 `pom.xml` 继续解析它的传递依赖。
-
 #### 重要说明
 
-- 仅把 `qfnu-java-api-0.0.1-SNAPSHOT.jar` 手动复制到本地 Maven 仓库目录，通常不够。
+- 仅把 `qfnu-java-api.jar` 手动复制到本地 Maven 仓库目录，通常不够。
 - 仅把该 JAR 添加到 IDE 的“外部依赖库”，通常也不够。
 - 原因是 Maven 解析传递依赖依赖于该构件对应的 `pom` 元数据；只有 JAR，没有 `pom`，Maven 不知道它还依赖哪些上游库。
 - 如果只有 JAR 而没有对应 `pom`，那就需要下游项目自行手动补齐所有运行时依赖。
@@ -290,7 +277,8 @@ io.github.plaguewzk.qfnujavaapi
 ├── model              // 数据模型
 │   ├── course              // 课程域模型 (Course, Weekday, Weeks, Section, SectionConstant, CourseInfo, CourseTable, Term, WeeklySchedule)
 │   ├── notification        // 通知域模型 (Notification, NotificationDetail)
-│   └── student             // 学生域模型 (StudentInfo)
+│   ├── student             // 学生域模型 (StudentInfo)
+│   └── grade             // 成绩域模型 (CourseGrade, CourseNature...)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
 │   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser, CourseTableParse)
@@ -322,7 +310,7 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 学期理论课表查询与解析 (CourseTable/CourseParser)
 
-- [ ] 成绩查询与解析 (Grade & GPA)
+- [x] 成绩查询与解析 (Grade & GPA)
 
 - [ ] 考试安排查询
 
