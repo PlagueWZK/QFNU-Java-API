@@ -7,10 +7,11 @@ import io.github.plaguewzk.qfnujavaapi.model.grade.CourseGrade;
 import io.github.plaguewzk.qfnujavaapi.model.grade.CourseNature;
 import io.github.plaguewzk.qfnujavaapi.model.grade.GradeQuery;
 import io.github.plaguewzk.qfnujavaapi.model.grade.GradeReport;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.GradeReportParser;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created on 2026/3/11 00:06
@@ -19,12 +20,12 @@ import java.util.List;
  */
 
 public class GradeService {
-    private final GradeReportParser gradeReportParser;
+    private final HtmlParser<GradeReport> gradeReportParser;
     private final QFNUContext qfnuContext;
 
-    public GradeService(QFNUContext qfnuContext) {
+    public GradeService(QFNUContext qfnuContext, HtmlParser<GradeReport> gradeReportParser) {
         this.qfnuContext = qfnuContext;
-        gradeReportParser = new GradeReportParser();
+        this.gradeReportParser = Objects.requireNonNull(gradeReportParser, "gradeReportParser");
     }
 
     public List<CourseGrade> getGradeList() {

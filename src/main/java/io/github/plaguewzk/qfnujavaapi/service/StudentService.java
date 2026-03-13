@@ -4,9 +4,10 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUAPI;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.StudentInfoParser;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created on 2025/12/31 00:43
@@ -15,10 +16,11 @@ import java.util.Map;
  */
 public class StudentService {
     private final QFNUExecutor qfnuExecutor;
-    private final StudentInfoParser infoParser = new StudentInfoParser();
+    private final HtmlParser<StudentInfo> infoParser;
 
-    public StudentService(QFNUContext context) {
+    public StudentService(QFNUContext context, HtmlParser<StudentInfo> infoParser) {
         this.qfnuExecutor = context.executor();
+        this.infoParser = Objects.requireNonNull(infoParser, "infoParser");
     }
 
     public StudentInfo getStudentInfo(){

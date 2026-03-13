@@ -22,7 +22,11 @@ public class GradeReportParser implements HtmlParser<GradeReport> {
     private static final Pattern AVERAGE_GRADE_POINT_PATTERN = Pattern.compile("平均学分绩点:(\\d+(?:\\.\\d+)?)");
     private static final Pattern AVERAGE_SCORE_PATTERN = Pattern.compile("平均成绩:(\\d+(?:\\.\\d+)?)");
 
-    private final CourseGradeParser courseGradeParser = new CourseGradeParser();
+    private final HtmlParser<List<CourseGrade>> courseGradeParser;
+
+    public GradeReportParser(HtmlParser<List<CourseGrade>> courseGradeParser) {
+        this.courseGradeParser = Objects.requireNonNull(courseGradeParser, "courseGradeParser");
+    }
 
     @Override
     public GradeReport parser(String html) {

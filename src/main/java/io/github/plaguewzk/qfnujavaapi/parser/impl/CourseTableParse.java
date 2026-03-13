@@ -21,7 +21,11 @@ import java.util.*;
  */
 
 public class CourseTableParse implements HtmlParser<CourseTable> {
-    private final CourseParser courseParser = new CourseParser();
+    private final CourseParser courseParser;
+
+    public CourseTableParse(CourseParser courseParser) {
+        this.courseParser = Objects.requireNonNull(courseParser, "courseParser");
+    }
 
     @Override
     public CourseTable parser(String html) {

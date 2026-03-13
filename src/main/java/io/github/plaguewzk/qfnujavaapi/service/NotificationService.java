@@ -5,14 +5,14 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.notification.Notification;
 import io.github.plaguewzk.qfnujavaapi.model.notification.NotificationDetail;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationDetailParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationListParser;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created on 2026/1/2 00:50
@@ -21,14 +21,18 @@ import java.util.Map;
  */
 @Slf4j
 public class NotificationService {
-    private final QFNUContext context;
     private final QFNUExecutor qfnuExecutor;
-    private final NotificationDetailParser notificationDetailParser = new NotificationDetailParser();
-    private final NotificationListParser notificationListParser = new NotificationListParser();
+    private final HtmlParser<NotificationDetail> notificationDetailParser;
+    private final HtmlParser<List<Notification>> notificationListParser;
 
-    public NotificationService(QFNUContext context) {
-        this.context = context;
+    public NotificationService(
+            QFNUContext context,
+            HtmlParser<List<Notification>> notificationListParser,
+            HtmlParser<NotificationDetail> notificationDetailParser
+    ) {
         this.qfnuExecutor = context.executor();
+        this.notificationListParser = Objects.requireNonNull(notificationListParser, "notificationListParser");
+        this.notificationDetailParser = Objects.requireNonNull(notificationDetailParser, "notificationDetailParser");
     }
 
     public List<Notification> getList() {

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created on 2026/1/2 23:17
@@ -23,7 +24,11 @@ import java.util.List;
 
 @Slf4j
 public class WeeklyScheduleParser implements HtmlParser<WeeklySchedule> {
-    private final CourseInfoParser courseInfoParser = new CourseInfoParser();
+    private final HtmlParser<CourseInfo> courseInfoParser;
+
+    public WeeklyScheduleParser(HtmlParser<CourseInfo> courseInfoParser) {
+        this.courseInfoParser = Objects.requireNonNull(courseInfoParser, "courseInfoParser");
+    }
 
     @Override
     @Nullable

@@ -6,13 +6,12 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
 import io.github.plaguewzk.qfnujavaapi.model.course.Term;
 import io.github.plaguewzk.qfnujavaapi.model.course.WeeklySchedule;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.SjmsParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.WeeklyScheduleParser;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created on 2026/1/2 23:16
@@ -21,26 +20,31 @@ import java.util.Map;
  */
 public class CourseService {
     private final QFNUExecutor qfnuExecutor;
-    private final WeeklyScheduleParser weeklyScheduleParser;
-    private final CourseTableParse courseTableParse;
-    private final SjmsParser sjmsParser;
+    private final HtmlParser<WeeklySchedule> weeklyScheduleParser;
+    private final HtmlParser<CourseTable> courseTableParser;
+    private final HtmlParser<String> sjmsParser;
 
     private String sjmsValueCache;
 
-    public CourseService(QFNUContext context) {
+    public CourseService(
+            QFNUContext context,
+            HtmlParser<WeeklySchedule> weeklyScheduleParser,
+            HtmlParser<CourseTable> courseTableParser,
+            HtmlParser<String> sjmsParser
+    ) {
         this.qfnuExecutor = context.executor();
-        this.weeklyScheduleParser = new WeeklyScheduleParser();
-        this.courseTableParse = new CourseTableParse();
-        this.sjmsParser = new SjmsParser();
+        this.weeklyScheduleParser = Objects.requireNonNull(weeklyScheduleParser, "weeklyScheduleParser");
+        this.courseTableParser = Objects.requireNonNull(courseTableParser, "courseTableParser");
+        this.sjmsParser = Objects.requireNonNull(sjmsParser, "sjmsParser");
     }
 
     public CourseTable getCourseTable(Term term, int week) {
         String result = qfnuExecutor.executePost(QFNUAPI.STUDENT_COURSE_LIST, Map.of("zc", String.valueOf(week), "xnxq01id", term.toString()), QFNUAPI.INDEX);
-        return courseTableParse.parser(result);
+        return courseTableParser.parser(result);
     }
 
     public CourseTable getCurrentCourseTable() {
-        return courseTableParse.parser(
+        return courseTableParser.parser(
                 qfnuExecutor.executeGet(QFNUAPI.STUDENT_COURSE_LIST)
         );
     }
