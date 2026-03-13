@@ -1,30 +1,10 @@
 package io.github.plaguewzk.qfnujavaapi.core;
 
-import io.github.plaguewzk.qfnujavaapi.model.course.CourseInfo;
-import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
-import io.github.plaguewzk.qfnujavaapi.model.course.WeeklySchedule;
-import io.github.plaguewzk.qfnujavaapi.model.grade.CourseGrade;
-import io.github.plaguewzk.qfnujavaapi.model.grade.GradeReport;
-import io.github.plaguewzk.qfnujavaapi.model.notification.Notification;
-import io.github.plaguewzk.qfnujavaapi.model.notification.NotificationDetail;
-import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
-import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseGradeParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseInfoParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.GradeReportParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationDetailParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.NotificationListParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.SjmsParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.StudentInfoParser;
-import io.github.plaguewzk.qfnujavaapi.parser.impl.WeeklyScheduleParser;
+import io.github.plaguewzk.qfnujavaapi.parser.impl.*;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 /**
  * 统一创建并缓存解析器实例，负责组合解析器之间的依赖关系。
@@ -32,78 +12,38 @@ import java.util.function.Supplier;
  * @author PlagueWZK
  */
 public final class ParserFactory {
+    private final ComponentResolver resolver;
     private final Map<Class<?>, Object> cache = new ConcurrentHashMap<>();
-    private final Map<Class<?>, Supplier<?>> parserRegistry;
+    private final Map<Class<?>, ComponentProvider<?>> parserRegistry;
 
-    public ParserFactory() {
-        this.parserRegistry = createRegistry();
+    public ParserFactory(ComponentResolver resolver, Map<Class<?>, ComponentProvider<?>> parserRegistry) {
+        this.resolver = Objects.requireNonNull(resolver, "resolver");
+        this.parserRegistry = Map.copyOf(Objects.requireNonNull(parserRegistry, "parserRegistry"));
     }
 
-    public HtmlParser<CourseTable> courseTableParser() {
-        return parser(CourseTableParse.class);
+    public static void registerDefaults(ParserRegistry registry) {
+        registry.registerParser(CourseParser.class, resolver -> new CourseParser());
+        registry.registerParser(CourseInfoParser.class, resolver -> new CourseInfoParser());
+        registry.registerParser(CourseGradeParser.class, resolver -> new CourseGradeParser());
+        registry.registerParser(SjmsParser.class, resolver -> new SjmsParser());
+        registry.registerParser(StudentInfoParser.class, resolver -> new StudentInfoParser());
+        registry.registerParser(NotificationListParser.class, resolver -> new NotificationListParser());
+        registry.registerParser(NotificationDetailParser.class, resolver -> new NotificationDetailParser());
+        registry.registerParser(CourseTableParse.class, resolver -> new CourseTableParse(resolver.parser(CourseParser.class)));
+        registry.registerParser(WeeklyScheduleParser.class, resolver -> new WeeklyScheduleParser(resolver.parser(CourseInfoParser.class)));
+        registry.registerParser(GradeReportParser.class, resolver -> new GradeReportParser(resolver.parser(CourseGradeParser.class)));
     }
 
-    public HtmlParser<WeeklySchedule> weeklyScheduleParser() {
-        return parser(WeeklyScheduleParser.class);
+    public <T> T getParser(Class<T> parserType) {
+        Object parser = cache.computeIfAbsent(parserType, this::createParser);
+        return parserType.cast(parser);
     }
 
-    public HtmlParser<String> sjmsParser() {
-        return parser(SjmsParser.class);
-    }
-
-    public HtmlParser<GradeReport> gradeReportParser() {
-        return parser(GradeReportParser.class);
-    }
-
-    public HtmlParser<List<Notification>> notificationListParser() {
-        return parser(NotificationListParser.class);
-    }
-
-    public HtmlParser<NotificationDetail> notificationDetailParser() {
-        return parser(NotificationDetailParser.class);
-    }
-
-    public HtmlParser<StudentInfo> studentInfoParser() {
-        return parser(StudentInfoParser.class);
-    }
-
-    private HtmlParser<List<CourseGrade>> courseGradeParser() {
-        return parser(CourseGradeParser.class);
-    }
-
-    private HtmlParser<CourseInfo> courseInfoParser() {
-        return parser(CourseInfoParser.class);
-    }
-
-    private CourseParser courseParser() {
-        return parser(CourseParser.class);
-    }
-
-    private Map<Class<?>, Supplier<?>> createRegistry() {
-        Map<Class<?>, Supplier<?>> registry = new HashMap<>();
-        register(registry, CourseParser.class, CourseParser::new);
-        register(registry, CourseInfoParser.class, CourseInfoParser::new);
-        register(registry, CourseGradeParser.class, CourseGradeParser::new);
-        register(registry, SjmsParser.class, SjmsParser::new);
-        register(registry, StudentInfoParser.class, StudentInfoParser::new);
-        register(registry, NotificationListParser.class, NotificationListParser::new);
-        register(registry, NotificationDetailParser.class, NotificationDetailParser::new);
-        register(registry, CourseTableParse.class, () -> new CourseTableParse(courseParser()));
-        register(registry, WeeklyScheduleParser.class, () -> new WeeklyScheduleParser(courseInfoParser()));
-        register(registry, GradeReportParser.class, () -> new GradeReportParser(courseGradeParser()));
-        return Map.copyOf(registry);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T parser(Class<?> parserType) {
-        Supplier<?> supplier = parserRegistry.get(parserType);
+    private Object createParser(Class<?> parserType) {
+        ComponentProvider<?> supplier = parserRegistry.get(parserType);
         if (supplier == null) {
             throw new IllegalArgumentException("不支持的解析器类型: " + parserType.getName());
         }
-        return (T) cache.computeIfAbsent(parserType, ignored -> supplier.get());
-    }
-
-    private <T> void register(Map<Class<?>, Supplier<?>> registry, Class<T> parserType, Supplier<? extends T> supplier) {
-        registry.put(parserType, supplier);
+        return supplier.get(resolver);
     }
 }

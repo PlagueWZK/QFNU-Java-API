@@ -29,6 +29,7 @@
 * **通知公告能力**：支持通知列表与详情解析（含文本与清理后的 HTML）。
 * **周课表解析**：支持从主页加载当周课表并结构化解析（含课程格子详情）。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
+* **外部扩展模块**：下游项目可通过 `QFNUModule` 注册自定义 Parser 与 Service，无需重写 SDK 工厂。
 * **健壮的异常处理**：统一的异常体系，区分网络错误、解析错误和业务逻辑错误。
 
 ## 异常体系
@@ -187,6 +188,89 @@ for (Course course : table.courses()) {
 
 `Course` 现在包含 `weekday` 字段，表示课程位于周一到周日中的哪一天。
 
+### 注册自定义扩展模块
+
+如果下游项目需要新增自己的页面解析器或业务服务，可以实现 `QFNUModule`，并在 `QFNUClient.Builder` 中通过 `install(...)` 注册。
+
+```java
+import io.github.plaguewzk.qfnujavaapi.QFNUClient;
+import io.github.plaguewzk.qfnujavaapi.core.ParserRegistry;
+import io.github.plaguewzk.qfnujavaapi.core.QFNUModule;
+import io.github.plaguewzk.qfnujavaapi.core.ServiceRegistry;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
+
+public final class CustomModule implements QFNUModule {
+    @Override
+    public void configure(ParserRegistry parsers, ServiceRegistry services) {
+        parsers.registerParser(CustomReportParser.class, resolver -> new CustomReportParser());
+
+        services.registerService(
+                CustomService.class,
+                resolver -> new CustomService(
+                        resolver.executor(),
+                        resolver.parser(CustomReportParser.class)
+                )
+        );
+    }
+
+    public static final class CustomReport {
+        private final String rawText;
+
+        public CustomReport(String rawText) {
+            this.rawText = rawText;
+        }
+
+        public String rawText() {
+            return rawText;
+        }
+    }
+
+    public static final class CustomReportParser implements HtmlParser<CustomReport> {
+        @Override
+        public CustomReport parser(String html) {
+            return new CustomReport(html.trim());
+        }
+    }
+
+    public static final class CustomService {
+        private final io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor executor;
+        private final HtmlParser<CustomReport> reportParser;
+
+        public CustomService(
+                io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor executor,
+                HtmlParser<CustomReport> reportParser
+        ) {
+            this.executor = executor;
+            this.reportParser = reportParser;
+        }
+
+        public CustomReport query(String html) {
+            return reportParser.parser(html);
+        }
+    }
+}
+```
+
+客户端使用方式：
+
+```java
+QFNUClient client = new QFNUClient.Builder()
+        .account("你的学号", "你的密码")
+        .install(new CustomModule())
+        .build();
+
+CustomModule.CustomService customService = client.service(CustomModule.CustomService.class);
+CustomModule.CustomReport report = customService.query("<html>demo</html>");
+System.out.println(report.rawText());
+```
+
+扩展开发建议：
+
+- 自定义 `Service` 使用构造器注入依赖，不要在类内部自行 `new Parser`。
+- 标准 HTML 解析器优先实现 `HtmlParser<T>`，以便交给工厂统一管理。
+- 若自定义 `Service` 依赖 SDK 内建能力，可通过 `resolver.service(...)` 与 `resolver.parser(...)` 获取。
+- 注册表不允许重复注册同一类型，重复注册会抛出异常。
+
 ## 📂 项目结构 | Project Structure
 
 ```Plaintext
@@ -194,9 +278,13 @@ io.github.plaguewzk.qfnujavaapi
 ├── QFNUClient.java     // 客户端入口
 ├── core                // 核心组件
 │   ├── QFNUAPI.java         // 接口常量
+│   ├── QFNUModule.java      // 外部扩展模块接口
 │   ├── QFNUContext.java     // 共享运行时上下文
 │   ├── QFNUExecutor.java    // HTTP执行器
+│   ├── ParserFactory.java   // Parser 工厂
 │   ├── ServiceFactory.java  // 通用服务工厂
+│   ├── ParserRegistry.java  // Parser 注册接口
+│   ├── ServiceRegistry.java // Service 注册接口
 │   ├── SessionInterceptor.java // 会话拦截器
 │   └── QFNUCookieJar.java   // Cookie管理
 ├── model              // 数据模型
