@@ -2,6 +2,7 @@ package io.github.plaguewzk.qfnujavaapi.parser;
 
 import io.github.plaguewzk.qfnujavaapi.model.grade.GradeReport;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.GradeReportParser;
+import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseGradeParser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,7 +11,7 @@ class GradeReportParserTest {
 
     @Test
     void shouldParseSummaryFromHtmlWhenPresent() {
-        GradeReportParser parser = new GradeReportParser();
+        GradeReportParser parser = new GradeReportParser(new CourseGradeParser());
         String html = """
                 <div>
                     查询条件：全部 所修门数:62 所修总学分:134 平均学分绩点:3.26 平均成绩:84.65
@@ -49,7 +50,7 @@ class GradeReportParserTest {
 
     @Test
     void shouldCalculateSummaryWhenHtmlDoesNotContainAggregates() {
-        GradeReportParser parser = new GradeReportParser();
+        GradeReportParser parser = new GradeReportParser(new CourseGradeParser());
         String html = """
                 <div>
                     查询条件：开课时间【2024-2025-2】

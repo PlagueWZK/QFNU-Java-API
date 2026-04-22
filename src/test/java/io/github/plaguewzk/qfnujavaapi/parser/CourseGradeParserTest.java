@@ -1,6 +1,5 @@
 package io.github.plaguewzk.qfnujavaapi.parser;
 
-import io.github.plaguewzk.qfnujavaapi.exception.ParsingErrorException;
 import io.github.plaguewzk.qfnujavaapi.model.grade.CourseGrade;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseGradeParser;
 import org.junit.jupiter.api.Test;
@@ -9,8 +8,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CourseGradeParserTest {
 
@@ -55,7 +52,7 @@ class CourseGradeParserTest {
     }
 
     @Test
-    void shouldIncludeFieldNameWhenOptionalFieldFormatIsInvalid() {
+    void shouldSkipRowWhenOptionalFieldFormatIsInvalid() {
         CourseGradeParser parser = new CourseGradeParser();
         String html = """
                 <table id='dataList'>
@@ -83,10 +80,8 @@ class CourseGradeParserTest {
                 </table>
                 """;
 
-        ParsingErrorException exception = assertThrows(ParsingErrorException.class, () -> parser.parser(html));
+        List<CourseGrade> grades = parser.parser(html);
 
-        assertTrue(exception.getMessage().contains("补重学期"));
-        assertTrue(exception.getMessage().contains("第 1 行"));
-        assertTrue(exception.getMessage().contains("bad-term"));
+        assertEquals(List.of(), grades);
     }
 }

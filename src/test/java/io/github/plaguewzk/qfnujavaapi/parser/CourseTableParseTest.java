@@ -2,6 +2,7 @@ package io.github.plaguewzk.qfnujavaapi.parser;
 
 import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
 import io.github.plaguewzk.qfnujavaapi.model.course.Weekday;
+import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,7 @@ class CourseTableParseTest {
 
     @Test
     void shouldParseWeekdayFromColumnIndex() {
-        CourseTableParse parser = new CourseTableParse();
+        CourseTableParse parser = new CourseTableParse(new CourseParser());
         String html = """
                 <html>
                 <body>

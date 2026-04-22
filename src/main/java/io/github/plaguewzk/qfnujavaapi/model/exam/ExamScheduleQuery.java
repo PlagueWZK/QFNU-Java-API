@@ -12,21 +12,15 @@ import java.util.Map;
  */
 
 @SuppressWarnings("SpellCheckingInspection")
-public class ExamScheduleQuery {
-    private final String xqlbmc;
-    private final String sxxnxq;
-    private final String dqxnxq;
-    private final String ckbz;
-    private final Term xnxqid;
-    private final SemesterType xqlb;
+public record ExamScheduleQuery(String xqlbmc, String sxxnxq, String dqxnxq, String ckbz, Term xnxqid,
+                                SemesterType xqlb) {
 
     private ExamScheduleQuery(Builder builder) {
-        sxxnxq = builder.sxxnxq;
-        dqxnxq = builder.dqxnxq;
-        ckbz = builder.ckbz;
-        xnxqid = builder.xnxqid;
-        xqlb = builder.xqlb;
-        xqlbmc = xqlb == null ? null : xqlb.displayName;
+        this(
+                builder.xqlb == null ? null : builder.xqlb.displayName,builder.sxxnxq,
+                builder.dqxnxq, builder.ckbz, builder.xnxqid,
+                builder.xqlb
+        );
     }
 
     public static Builder builder() {
@@ -35,15 +29,14 @@ public class ExamScheduleQuery {
 
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<>();
-        map.put("sxxnxq", sxxnxq ==  null ? "" : sxxnxq);
-        map.put("dqxnxq", dqxnxq ==   null ? "" : dqxnxq);
-        map.put("ckbz", ckbz ==   null ? "" : ckbz);
+        map.put("sxxnxq", sxxnxq == null ? "" : sxxnxq);
+        map.put("dqxnxq", dqxnxq == null ? "" : dqxnxq);
+        map.put("ckbz", ckbz == null ? "" : ckbz);
         map.put("xnxqid", xnxqid == null ? Term.current().toString() : xnxqid.toString());
         map.put("xqlb", xqlb == null ? "" : xqlb.value);
-        map.put("xqlbmc", xqlbmc == null ? "期末" : xqlbmc);
+        map.put("xqlbmc", xqlbmc == null ? "" : xqlbmc);
         return map;
     }
-
 
     public static class Builder {
         private String sxxnxq;

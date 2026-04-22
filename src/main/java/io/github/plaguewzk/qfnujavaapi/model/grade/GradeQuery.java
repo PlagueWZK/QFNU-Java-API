@@ -66,6 +66,8 @@ public final class GradeQuery {
         private String kcmc = "";
         private String xsfs = "all";
 
+        private Builder() {}
+
         public Builder startSemester(Term kksj) {
             this.kksj = kksj.toString();
             return this;

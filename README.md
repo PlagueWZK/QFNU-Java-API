@@ -312,7 +312,11 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 成绩查询与解析 (Grade & GPA)
 
-- [ ] 考试安排查询
+- [x] 考试安排查询
+
+- [ ] 学生评价自动化
+
+- [ ] 培养方案解析
 
 - [ ] 选课功能支持
 
