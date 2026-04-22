@@ -35,3 +35,6 @@ build/
 /src/main/java/io/github/plaguewzk/qfnujavaapi/local/
 config.qfnuapi.properties
 /temp/
+/outputs/
+/docs/requirements
+/docs/plans

@@ -1,5 +1,6 @@
 # 本地开发配置示例
+# Example of Local Development Configuration
 # 复制为项目根目录下的 config.qfnuapi.properties 后再填写真实值
-
+# Copy this file to `config.qfnuapi.properties` in the project root directory, then enter the actual values.
 qfnu.account=202xxxxxxx
 qfnu.password=your-password

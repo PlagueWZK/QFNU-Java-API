@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
  *
  * @author PlagueWZK
  */
+@SuppressWarnings({"SpellCheckingInspection", "HttpUrlsUsage"})
 @RequiredArgsConstructor
 public enum QFNUAPI {
     //基础路径
@@ -35,7 +36,10 @@ public enum QFNUAPI {
     STUDENT_COURSE_LIST(BASE_URL.value + "/xskb/xskb_list.do"),
 
     //成绩查询
-    GRADE_INQUIRY(BASE_URL.value + "/kscj/cjcx_list");
+    GRADE_INQUIRY(BASE_URL.value + "/kscj/cjcx_list"),
+
+    //考试信息查询
+    EXAM_INFORMATION_LIST(BASE_URL.value + "/xsks/xsksap_list");
 
     public final String value;
 }

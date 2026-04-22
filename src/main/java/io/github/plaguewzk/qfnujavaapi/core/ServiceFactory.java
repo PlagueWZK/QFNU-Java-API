@@ -35,6 +35,13 @@ public final class ServiceFactory {
                 )
         );
         registry.registerService(
+                ExamScheduleService.class,
+                resolver -> new ExamScheduleService(
+                        resolver.context(),
+                        resolver.parser(ExamScheduleParser.class)
+                )
+        );
+        registry.registerService(
                 GradeService.class,
                 resolver -> new GradeService(
                         resolver.context(),

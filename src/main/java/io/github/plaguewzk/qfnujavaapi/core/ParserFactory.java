@@ -25,6 +25,7 @@ public final class ParserFactory {
         registry.registerParser(CourseParser.class, resolver -> new CourseParser());
         registry.registerParser(CourseInfoParser.class, resolver -> new CourseInfoParser());
         registry.registerParser(CourseGradeParser.class, resolver -> new CourseGradeParser());
+        registry.registerParser(ExamScheduleParser.class, resolver -> new ExamScheduleParser());
         registry.registerParser(SjmsParser.class, resolver -> new SjmsParser());
         registry.registerParser(StudentInfoParser.class, resolver -> new StudentInfoParser());
         registry.registerParser(NotificationListParser.class, resolver -> new NotificationListParser());
