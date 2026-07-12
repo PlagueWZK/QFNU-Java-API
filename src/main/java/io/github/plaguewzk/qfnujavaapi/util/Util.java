@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
  * @author PlagueWZK
  */
 
-public class Util {
+public final class Util {
     public static final java.time.format.DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER =
             java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     public static final java.time.format.DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER_IGNORE_SECOND =
