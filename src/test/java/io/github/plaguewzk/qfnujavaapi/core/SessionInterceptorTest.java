@@ -3,6 +3,7 @@ package io.github.plaguewzk.qfnujavaapi.core;
 import io.github.plaguewzk.qfnujavaapi.exception.LoginFailedException;
 import io.github.plaguewzk.qfnujavaapi.exception.SessionRefreshException;
 import okhttp3.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DisplayName("会话拦截器")
 class SessionInterceptorTest {
 
     private static Request protectedRequest() {
@@ -32,6 +34,7 @@ class SessionInterceptorTest {
     }
 
     @Test
+    @DisplayName("登录失败时包装为 SessionRefreshException 并保留原始原因")
     void shouldWrapLoginFailureAndPreserveCause() {
         LoginFailedException cause = new LoginFailedException("登录失败");
         SessionInterceptor interceptor = new SessionInterceptor(() -> {
@@ -47,6 +50,7 @@ class SessionInterceptorTest {
     }
 
     @Test
+    @DisplayName("登录成功后重试原始请求")
     void shouldRetryOriginalRequestAfterLoginSuccess() throws IOException {
         SessionInterceptor interceptor = new SessionInterceptor(() -> {
         });

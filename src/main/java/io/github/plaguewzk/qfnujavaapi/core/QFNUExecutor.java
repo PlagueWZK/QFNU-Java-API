@@ -7,18 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 public record QFNUExecutor(OkHttpClient client) {
-
-    private static String encode(String value) {
-        return URLEncoder.encode(Objects.requireNonNull(value), StandardCharsets.UTF_8);
-    }
 
     public String executeGet(QFNUAPI endpoint) {
         Request request = new Request.Builder().url(endpoint.value).get().build();
@@ -26,23 +18,14 @@ public record QFNUExecutor(OkHttpClient client) {
     }
 
     public String executeGet(QFNUAPI endpoint, Map<String, String> queryParameters) {
-        String queryString = queryParameters.entrySet().stream()
-                .map((entry) -> String.join("=", encode(entry.getKey()), encode(entry.getValue())))
-                .collect(Collectors.joining("&"));
-        Request request = new Request.Builder().url(endpoint.value + "?" + queryString).get().build();
+        Request request = new Request.Builder().url(buildUrl(endpoint, queryParameters)).get().build();
         return executeForString(request);
     }
 
     public String executePost(QFNUAPI endpoint, Map<String, String> body, String referer) {
         FormBody.Builder builder = new FormBody.Builder();
         body.forEach(builder::add);
-
-        Request request = new Request.Builder()
-                .url(endpoint.value)
-                .post(builder.build())
-                .header("Referer", referer != null ? referer : QFNUAPI.INDEX.value)
-                .build();
-        return executeForString(request);
+        return executePostBody(endpoint, builder.build(), referer);
     }
 
     public String executePost(QFNUAPI endpoint, Map<String, String> body, QFNUAPI refererApi) {
@@ -52,6 +35,35 @@ public record QFNUExecutor(OkHttpClient client) {
     public String executePost(QFNUAPI endpoint, Map<String, String> body, QFNUAPI refererApi, Map<String, String> queryParameters) {
         String referer = buildUrl(refererApi, queryParameters);
         return executePost(endpoint, body, referer);
+    }
+
+    /**
+     * 以 URL 编码字符串作为表单体执行 POST 请求（支持重复 key）。
+     */
+    public String executeFormPost(QFNUAPI endpoint, String urlEncodedBody, String referer) {
+        RequestBody requestBody = RequestBody.create(
+                urlEncodedBody,
+                MediaType.parse("application/x-www-form-urlencoded; charset=utf-8")
+        );
+        return executePostBody(endpoint, requestBody, referer);
+    }
+
+    public String executeFormPost(QFNUAPI endpoint, String urlEncodedBody, QFNUAPI refererApi) {
+        return executeFormPost(endpoint, urlEncodedBody, refererApi.value);
+    }
+
+    // ---- 内部方法 ----
+
+    /**
+     * 统一的 POST 请求执行，消除 executePost / executeFormPost 的重复代码。
+     */
+    private String executePostBody(QFNUAPI endpoint, RequestBody body, String referer) {
+        Request request = new Request.Builder()
+                .url(endpoint.value)
+                .post(body)
+                .header("Referer", referer != null ? referer : QFNUAPI.INDEX.value)
+                .build();
+        return executeForString(request);
     }
 
     public byte[] executeForBytes(Request request) {

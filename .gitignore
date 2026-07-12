@@ -36,5 +36,7 @@ build/
 config.qfnuapi.properties
 /temp/
 /outputs/
+/docs/plans/
+/docs/requirements/
 /docs/requirements
 /docs/plans
