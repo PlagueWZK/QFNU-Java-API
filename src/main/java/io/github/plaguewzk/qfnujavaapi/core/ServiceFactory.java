@@ -60,7 +60,10 @@ public final class ServiceFactory {
                 StudentService.class,
                 resolver -> new StudentService(
                         resolver.context(),
-                        resolver.parser(StudentInfoParser.class)
+                        resolver.parser(StudentInfoParser.class),
+                        resolver.parser(EvaluationListParser.class),
+                        resolver.parser(EvaluationCourseParser.class),
+                        resolver.parser(EvaluationFormParser.class)
                 )
         );
     }

@@ -4,7 +4,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
-import java.time.format.DateTimeFormatter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created on 2026/1/2 15:42
@@ -13,10 +14,19 @@ import java.time.format.DateTimeFormatter;
  */
 
 public class Util {
-    public static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-    public static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER_IGNORE_SECOND = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+    public static final java.time.format.DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    public static final java.time.format.DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER_IGNORE_SECOND =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
     private Util() {
+    }
+
+    /**
+     * URL 编码字符串，null 值编码为空字符串。
+     */
+    public static String encodeUrl(String value) {
+        return URLEncoder.encode(value != null ? value : "", StandardCharsets.UTF_8);
     }
 
     public static String cleanHtml(String rawHtml) {

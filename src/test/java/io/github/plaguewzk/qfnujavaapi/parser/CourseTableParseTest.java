@@ -4,13 +4,16 @@ import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
 import io.github.plaguewzk.qfnujavaapi.model.course.Weekday;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseTableParse;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@DisplayName("课表解析器")
 class CourseTableParseTest {
 
     @Test
+    @DisplayName("从列索引解析工作日映射")
     void shouldParseWeekdayFromColumnIndex() {
         CourseTableParse parser = new CourseTableParse(new CourseParser());
         String html = """

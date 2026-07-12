@@ -29,6 +29,12 @@
 * **通知公告能力**：支持通知列表与详情解析（含文本与清理后的 HTML）。
 * **周课表解析**：支持从主页加载当周课表并结构化解析（含课程格子详情）。
 * **模块化解析**：基于 `Jsoup` 的独立解析层，将 HTML 转换为 Java Record 实体对象。
+* **学生评教自动化**：
+    * 支持语义化指标枚举 (`EvaluationIndicatorType`)，告别魔法数字。
+    * 两种自动评分策略：最接近满分（~98.02）和最接近 90 分（严格 < 90）。
+    * 40% 高分比例控制，一键评完整个评价入口下的所有课程。
+    * 各课程评分独立 try-catch，单门失败不影响后续。
+    * 评分保存与最终提交分离，手动调用 `finalSubmit()` 完成提交。
 * **外部扩展模块**：下游项目可通过 `QFNUModule` 注册自定义 Parser 与 Service，无需重写 SDK 工厂。
 * **健壮的异常处理**：统一的异常体系，区分网络错误、解析错误和业务逻辑错误。
 
@@ -175,6 +181,41 @@ for (Course course : table.courses()) {
 
 `Course` 现在包含 `weekday` 字段，表示课程位于周一到周日中的哪一天。
 
+### 学生评教自动化
+
+```java
+import io.github.plaguewzk.qfnujavaapi.model.evaluation.*;
+import io.github.plaguewzk.qfnujavaapi.service.StudentService;
+import java.util.List;
+
+StudentService svc = client.service(StudentService.class);
+
+// 1. 获取评教入口和课程列表
+List<EvaluationEntry> entries = svc.getEvaluationList();
+List<EvaluationCourse> courses = svc.getEvaluationCourses(entries.get(0));
+
+// 2. 一键评完所有课程（前 40% 最接近满分 ~98 分，剩余最接近 90 分）
+List<EvaluationResult> results = svc.autoEvaluateAll(entries.get(0));
+results.forEach(System.out::println);
+// 输出: [✓] 软件体系结构与设计 (CLOSEST_TO_FULL) → 98.02 分
+//       [✓] Linux程序设计 (CLOSEST_TO_90) → 89.98 分
+
+// 3. 检查满意后手动最终提交（提交后不可修改！）
+svc.finalSubmit(entries.get(0));
+
+// 自定义评分方案：
+// svc.autoEvaluate(course, EvaluationScheme.CLOSEST_TO_FULL);
+// svc.autoEvaluate(course, EvaluationScheme.CLOSEST_TO_90);
+
+// 手动自定义评教（语义化指标枚举）：
+// EvaluationFormData form = svc.getEvaluationForm(course);
+// svc.submitEvaluation(EvaluationSubmission.builder()
+//         .fromForm(form)
+//         .indicator(EvaluationIndicatorType.TEACHER_ETHICS, EvaluationRating.EXCELLENT)
+//         .indicator(EvaluationIndicatorType.CONTENT_QUALITY, EvaluationRating.GOOD)
+//         .build());
+```
+
 ### 注册自定义扩展模块
 
 如果下游项目需要新增自己的页面解析器或业务服务，可以实现 `QFNUModule`，并在 `QFNUClient.Builder` 中通过 `install(...)` 注册。
@@ -276,21 +317,26 @@ io.github.plaguewzk.qfnujavaapi
 │   └── QFNUCookieJar.java   // Cookie管理
 ├── model              // 数据模型
 │   ├── course              // 课程域模型 (Course, Weekday, Weeks, Section, SectionConstant, CourseInfo, CourseTable, Term, WeeklySchedule)
+│   ├── evaluation          // 评教域模型 (EvaluationEntry, EvaluationCourse, EvaluationFormData, EvaluationIndicator, EvaluationRating, EvaluationScheme, EvaluationSubmission, EvaluationResult, EvaluationAutoScorer)
+│   ├── exam                // 考试域模型 (ExamSchedule, ExamScheduleQuery, SemesterType)
+│   ├── grade               // 成绩域模型 (CourseGrade, CourseNature, GradeQuery, GradeReport...)
 │   ├── notification        // 通知域模型 (Notification, NotificationDetail)
-│   ├── student             // 学生域模型 (StudentInfo)
-│   └── grade             // 成绩域模型 (CourseGrade, CourseNature...)
+│   └── student             // 学生域模型 (StudentInfo)
 ├── parser             // 解析器层
 │   ├── HtmlParser.java     // 解析接口
-│   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser, CourseTableParse)
+│   ├── ParserUtils.java    // 解析工具方法
+│   └── impl                // 具体实现 (StudentInfoParser, WeeklyScheduleParser, CourseInfoParser, SjmsParser, NotificationListParser, NotificationDetailParser, CourseParser, CourseTableParse, EvaluationListParser, EvaluationCourseParser, EvaluationFormParser)
 ├── service            // 业务服务层
-│   ├── LoginService.java   // 登录逻辑
-│   ├── StudentService.java // 学生相关业务
+│   ├── StudentService.java // 学生+评教业务（getEvaluationList, getEvaluationCourses, getEvaluationForm, autoEvaluate, autoEvaluateAll, finalSubmit）
 │   ├── CourseService.java  // 课表相关业务
+│   ├── GradeService.java   // 成绩相关业务
+│   ├── ExamScheduleService.java // 考试安排业务
 │   ├── NotificationService.java // 通知相关业务
+│   ├── LoginService.java   // 登录逻辑
 │   ├── CaptchaService.java // 验证码识别接口
 │   └── impl                // 默认验证码实现 (DefaultCaptchaService)
 ├── util               // 工具类
-│   └── Util.java
+│   └── Util.java           // HTML清理、URL编码
 └── exception          // 自定义异常
 ```
 
@@ -314,7 +360,7 @@ io.github.plaguewzk.qfnujavaapi
 
 - [x] 考试安排查询
 
-- [ ] 学生评价自动化
+- [x] 学生评教自动化（含最接近满分/最接近90分两种策略）
 
 - [ ] 培养方案解析
 

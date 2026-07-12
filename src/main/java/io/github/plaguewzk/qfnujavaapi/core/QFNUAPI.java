@@ -39,7 +39,17 @@ public enum QFNUAPI {
     GRADE_INQUIRY(BASE_URL.value + "/kscj/cjcx_list"),
 
     //考试信息查询
-    EXAM_INFORMATION_LIST(BASE_URL.value + "/xsks/xsksap_list");
+    EXAM_INFORMATION_LIST(BASE_URL.value + "/xsks/xsksap_list"),
+
+    //学生评价
+    STUDENT_FEEDBACK(BASE_URL.value + "/xspj/xspj_find.do"),
+    STUDENT_EVALUATION_COURSES(BASE_URL.value + "/xspj/xspj_list.do"),
+    STUDENT_EVALUATION_FORM(BASE_URL.value + "/xspj/xspj_edit.do"),
+    STUDENT_EVALUATION_SAVE(BASE_URL.value + "/xspj/xspj_save.do"),
+    STUDENT_EVALUATION_FINAL_SUBMIT(BASE_URL.value + "/xspj/toSavepj03wjpj.do"),
+
+    //末尾值,方便编码不用来回改分号,不用且禁用
+    UNDEFINED(null);
 
     public final String value;
 }
