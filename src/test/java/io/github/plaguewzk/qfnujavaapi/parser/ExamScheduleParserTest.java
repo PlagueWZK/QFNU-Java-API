@@ -3,6 +3,7 @@ package io.github.plaguewzk.qfnujavaapi.parser;
 import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.model.exam.ExamSchedule;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.ExamScheduleParser;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,9 +11,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@DisplayName("考试安排解析器")
 class ExamScheduleParserTest {
 
     @Test
+    @DisplayName("解析考试安排行数据")
     void shouldParseExamScheduleRow() {
         ExamScheduleParser parser = new ExamScheduleParser();
         String html = """
@@ -48,6 +51,7 @@ class ExamScheduleParserTest {
     }
 
     @Test
+    @DisplayName("无数据行时返回空列表")
     void shouldReturnEmptyListWhenRowSaysNoData() {
         ExamScheduleParser parser = new ExamScheduleParser();
         String html = """
@@ -65,6 +69,7 @@ class ExamScheduleParserTest {
     }
 
     @Test
+    @DisplayName("数据表格缺失时抛出 PageStructureException")
     void shouldThrowWhenDataTableMissing() {
         ExamScheduleParser parser = new ExamScheduleParser();
 

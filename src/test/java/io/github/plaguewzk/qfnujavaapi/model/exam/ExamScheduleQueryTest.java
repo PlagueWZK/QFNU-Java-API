@@ -8,15 +8,19 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import org.junit.jupiter.api.DisplayName;
+
 /**
- * Created on 2026/4/22 23:56
+ * ExamScheduleQuery 单元测试。
  *
  * @author PlagueWZK
  */
+@DisplayName("考试安排查询参数")
+class ExamScheduleQueryTest {
 
-public class ExamScheduleQueryTest {
     @Test
-    public void shouldBuildDefaultQueryParameters() {
+    @DisplayName("构建默认查询参数")
+    void shouldBuildDefaultQueryParameters() {
         ExamScheduleQuery query = ExamScheduleQuery.builder().build();
 
         assertNull(query.xqlbmc());
@@ -35,7 +39,8 @@ public class ExamScheduleQueryTest {
     }
 
     @Test
-    public void shouldMapSemesterTypeAndExplicitParameters() {
+    @DisplayName("构建带学期类型和显式参数的查询")
+    void shouldMapSemesterTypeAndExplicitParameters() {
         ExamScheduleQuery query = ExamScheduleQuery.builder()
                 .xnxqid(new Term(2025, 1))
                 .sxxnxq("2024-2025-2")

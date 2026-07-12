@@ -2,6 +2,7 @@ package io.github.plaguewzk.qfnujavaapi.parser;
 
 import io.github.plaguewzk.qfnujavaapi.model.grade.CourseGrade;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseGradeParser;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,9 +10,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@DisplayName("课程成绩解析器")
 class CourseGradeParserTest {
 
     @Test
+    @DisplayName("解析包含空白可选字段的成绩行")
     void shouldParseGradeRowWithBlankOptionalFields() {
         CourseGradeParser parser = new CourseGradeParser();
         String html = """
@@ -52,6 +55,7 @@ class CourseGradeParserTest {
     }
 
     @Test
+    @DisplayName("可选字段格式无效时跳过该行")
     void shouldSkipRowWhenOptionalFieldFormatIsInvalid() {
         CourseGradeParser parser = new CourseGradeParser();
         String html = """

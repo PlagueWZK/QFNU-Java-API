@@ -33,6 +33,9 @@ public final class ParserFactory {
         registry.registerParser(CourseTableParse.class, resolver -> new CourseTableParse(resolver.parser(CourseParser.class)));
         registry.registerParser(WeeklyScheduleParser.class, resolver -> new WeeklyScheduleParser(resolver.parser(CourseInfoParser.class)));
         registry.registerParser(GradeReportParser.class, resolver -> new GradeReportParser(resolver.parser(CourseGradeParser.class)));
+        registry.registerParser(EvaluationListParser.class, resolver -> new EvaluationListParser());
+        registry.registerParser(EvaluationCourseParser.class, resolver -> new EvaluationCourseParser());
+        registry.registerParser(EvaluationFormParser.class, resolver -> new EvaluationFormParser());
     }
 
     public <T> T getParser(Class<T> parserType) {

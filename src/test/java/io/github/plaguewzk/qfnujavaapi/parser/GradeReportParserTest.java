@@ -3,13 +3,19 @@ package io.github.plaguewzk.qfnujavaapi.parser;
 import io.github.plaguewzk.qfnujavaapi.model.grade.GradeReport;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.GradeReportParser;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.CourseGradeParser;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * GradeReportParser 单元测试。
+ */
+@DisplayName("成绩报告解析器")
 class GradeReportParserTest {
 
     @Test
+    @DisplayName("解析页面中已有的汇总统计数据")
     void shouldParseSummaryFromHtmlWhenPresent() {
         GradeReportParser parser = new GradeReportParser(new CourseGradeParser());
         String html = """
@@ -49,6 +55,7 @@ class GradeReportParserTest {
     }
 
     @Test
+    @DisplayName("页面无汇总数据时根据成绩列表计算统计值")
     void shouldCalculateSummaryWhenHtmlDoesNotContainAggregates() {
         GradeReportParser parser = new GradeReportParser(new CourseGradeParser());
         String html = """
