@@ -18,10 +18,12 @@ public final class ComponentRegistry implements ParserRegistry, ServiceRegistry 
         register(serviceProviders, serviceType, provider, "service");
     }
 
+    @Override
     public Map<Class<?>, ComponentProvider<?>> parserProviders() {
         return Map.copyOf(parserProviders);
     }
 
+    @Override
     public Map<Class<?>, ComponentProvider<?>> serviceProviders() {
         return Map.copyOf(serviceProviders);
     }

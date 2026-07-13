@@ -5,6 +5,8 @@ package io.github.plaguewzk.qfnujavaapi.core;
  *
  * @author PlagueWZK
  */
+
+@FunctionalInterface
 public interface QFNUModule {
     void configure(ParserRegistry parsers, ServiceRegistry services);
 }

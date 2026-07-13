@@ -1,14 +1,6 @@
 package io.github.plaguewzk.qfnujavaapi;
 
-import io.github.plaguewzk.qfnujavaapi.core.ComponentRegistry;
-import io.github.plaguewzk.qfnujavaapi.core.DefaultComponentResolver;
-import io.github.plaguewzk.qfnujavaapi.core.ParserFactory;
-import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
-import io.github.plaguewzk.qfnujavaapi.core.QFNUCookieJar;
-import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
-import io.github.plaguewzk.qfnujavaapi.core.QFNUModule;
-import io.github.plaguewzk.qfnujavaapi.core.ServiceFactory;
-import io.github.plaguewzk.qfnujavaapi.core.SessionInterceptor;
+import io.github.plaguewzk.qfnujavaapi.core.*;
 import io.github.plaguewzk.qfnujavaapi.service.CaptchaService;
 import io.github.plaguewzk.qfnujavaapi.service.LoginService;
 import io.github.plaguewzk.qfnujavaapi.exception.InvalidParameterException;
@@ -28,32 +20,37 @@ import java.util.List;
 @Slf4j
 public class QFNUClient {
 
-    private static final int DEFAULT_LOGIN_RETRY_COUNT = 20;
+    private static final int DEFAULT_LOGIN_RETRY_COUNT = 10;
+    private static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(10);
 
     private final QFNUContext context;
-    private final ServiceFactory serviceFactory;
+    private final ComponentResolver resolver;
     private final QFNUExecutor executor;
 
-    private QFNUClient(String userAccount, String userPassword, CaptchaService captchaService, List<QFNUModule> modules) {
-        OkHttpClient httpClient = new OkHttpClient.Builder()
-                .cookieJar(new QFNUCookieJar())
-                .addInterceptor(new SessionInterceptor(this::login))
-                .connectTimeout(Duration.ofSeconds(10))
-                .readTimeout(Duration.ofSeconds(10))
-                .followRedirects(true)
-                .build();
+    private QFNUClient(
+            String userAccount, String userPassword, CaptchaService captchaService,
+            List<QFNUModule> modules
+    ) {
+        this(userAccount, userPassword, captchaService, modules, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
+    }
+
+    private QFNUClient(
+            String userAccount, String userPassword, CaptchaService captchaService, List<QFNUModule> modules,
+            Duration connectTimeout, Duration readTimeout
+    ) {
+        OkHttpClient httpClient = new OkHttpClient.Builder().cookieJar(new QFNUCookieJar()).addInterceptor(
+                new SessionInterceptor(this::login)).connectTimeout(connectTimeout).readTimeout(
+                readTimeout).followRedirects(true).build();
         this.executor = new QFNUExecutor(httpClient);
         this.context = new QFNUContext(this.executor, userAccount, userPassword, captchaService);
         ComponentRegistry registry = new ComponentRegistry();
-        ParserFactory.registerDefaults(registry);
-        ServiceFactory.registerDefaults(registry);
+        new QFNUBuiltinModule().configure(registry, registry);
         for (QFNUModule module : modules) {
             module.configure(registry, registry);
         }
-        DefaultComponentResolver resolver = new DefaultComponentResolver(this.context);
-        ParserFactory parserFactory = new ParserFactory(resolver, registry.parserProviders());
-        this.serviceFactory = new ServiceFactory(resolver, registry.serviceProviders());
-        resolver.bind(parserFactory, this.serviceFactory);
+        this.resolver = new DefaultComponentResolver(
+                this.context, registry.parserProviders(), registry.serviceProviders());
     }
 
     public QFNUExecutor executor() {
@@ -65,7 +62,11 @@ public class QFNUClient {
     }
 
     public <T> T service(Class<T> serviceType) {
-        return serviceFactory.getService(serviceType);
+        return resolver.service(serviceType);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     private void login() {
@@ -77,6 +78,8 @@ public class QFNUClient {
         private String userPassword;
         private CaptchaService captchaService;
         private final List<QFNUModule> modules = new ArrayList<>();
+        private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+        private Duration readTimeout = DEFAULT_READ_TIMEOUT;
 
         public Builder account(String account, String password) {
             if (account == null || account.isBlank()) {
@@ -103,8 +106,35 @@ public class QFNUClient {
             return this;
         }
 
+        /**
+         * 设置 HTTP 连接超时和读取超时。
+         *
+         * @param connectTimeout 连接超时，不能为 null，必须大于零
+         * @param readTimeout    读取超时，不能为 null，必须大于零
+         */
+        public Builder timeout(Duration connectTimeout, Duration readTimeout) {
+            if (connectTimeout == null) {
+                throw new InvalidParameterException("连接超时(connectTimeout)不能为 null");
+            }
+            if (connectTimeout.isNegative() || connectTimeout.isZero()) {
+                throw new InvalidParameterException("连接超时(connectTimeout)必须大于零");
+            }
+            if (readTimeout == null) {
+                throw new InvalidParameterException("读取超时(readTimeout)不能为 null");
+            }
+            if (readTimeout.isNegative() || readTimeout.isZero()) {
+                throw new InvalidParameterException("读取超时(readTimeout)必须大于零");
+            }
+            this.connectTimeout = connectTimeout;
+            this.readTimeout = readTimeout;
+            return this;
+        }
+
         public QFNUClient build() {
-            return new QFNUClient(userAccount, userPassword, captchaService, List.copyOf(modules));
+            return new QFNUClient(
+                    userAccount, userPassword, captchaService, List.copyOf(modules), connectTimeout,
+                    readTimeout
+            );
         }
     }
 }

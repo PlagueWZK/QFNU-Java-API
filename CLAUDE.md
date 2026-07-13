@@ -60,9 +60,8 @@ QFNUClient (入口层，Builder 模式)
 这是项目最核心的扩展机制，理解它能快速定位代码：
 
 1. **`ComponentRegistry`** — 同时实现 `ParserRegistry` 和 `ServiceRegistry`，内部用两个 `LinkedHashMap<Class<?>, ComponentProvider<?>>` 存储 parser 和 service 的懒加载工厂。
-2. **`ParserFactory`** / **`ServiceFactory`** — 负责按需实例化和缓存组件（`ConcurrentHashMap`），通过 `ComponentResolver` 注入依赖。
-3. **`DefaultComponentResolver`** — 实现 `ComponentResolver`，提供 `parser(Class)` 和 `service(Class)` 方法，内部委托给对应的 Factory。
-4. **`QFNUModule`** 接口 — 下游项目可实现此接口来注册自定义 parser/service，通过 `QFNUClient.Builder.install(module)` 集成。
+2. **`DefaultComponentResolver`** — 实现 `ComponentResolver`，直接持有 registry 并负责按需实例化和缓存组件（`ConcurrentHashMap`），构造即完整，无需额外的 bind 步骤。
+3. **`QFNUModule`** 接口 — 下游项目可实现此接口来注册自定义 parser/service，通过 `QFNUClient.Builder.install(module)` 集成。
 
 关键设计原则：**Parser 可以依赖其他 Parser，Service 可以依赖 Parser，但 Parser 不应依赖 Service**。依赖通过构造函数声明，由 `DefaultComponentResolver` 在实例化时自动注入。
 
@@ -104,7 +103,7 @@ QFNUExecutor (OkHttpClient 封装，提供 GET/POST/URL构建)
 2. **`parser/impl/`** — 实现 `HtmlParser<T>` 接口的解析器
 3. **`service/`** — 创建业务 Service，构造函数接收所需 Parser
 4. **`core/QFNUAPI.java`** — 添加新的端点 URL（如需）
-5. **`core/ParserFactory` / `ServiceFactory`** — 在 `registerDefaults()` 中注册新组件
+5. **`core/QFNUBuiltinModule`** — 在 `configure()` 中注册新组件的 Parser 和 Service
 6. **测试** — 使用真实教务页面导出 HTML 作为测试 fixture，编写单元测试
 
 ## 异常体系
