@@ -746,6 +746,8 @@ QFNUAPIException (RuntimeException)
 | Maven | 3.6+ | 构建和依赖管理 |
 | Git | 任意 | 版本控制 |
 
+> **Tesseract 语言包**：默认验证码 OCR 使用 Tess4J，SDK 内置了 `eng.traineddata` 并在首次运行时自动释放到临时目录，无需手动安装 Tesseract。如果需要自定义 OCR 引擎，请确保对应语言包在 classpath 中。
+
 **步骤 1：克隆仓库**
 
 ```bash
@@ -1310,7 +1312,8 @@ io.github.plaguewzk.qfnujavaapi
 │   ├── grade/    (7)            // 成绩相关
 │   ├── notification/ (2)        // 通知相关
 │   └── student/  (1)            // 学生信息
-├── exception/                   // 异常体系 (13 文件)
+│   └── College.java / ExecutionPlanResult.java (2 顶层文件)
+├── exception/                   // 异常体系 (14 文件)
 └── util/
     └── Util.java                // 工具方法
 ```
