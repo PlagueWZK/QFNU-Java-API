@@ -30,7 +30,7 @@
   - [2.7 测试指南](#27-测试指南)
   - [2.8 提交规范](#28-提交规范)
   - [2.9 发布流程](#29-发布流程)
-  - [附录](#附录)
+- [附录](#附录)
 
 ---
 
@@ -1299,13 +1299,13 @@ io.github.plaguewzk.qfnujavaapi
 │   ├── GradeService.java
 │   ├── ExamScheduleService.java
 │   └── NotificationService.java
-├── parser/                      // 解析层 (15 文件)
+├── parser/                      // 解析层 (16 文件)
 │   ├── HtmlParser.java          // 解析接口
 │   ├── ParserUtils.java         // 公共工具
-│   └── impl/                    // 13 个解析实现
-├── model/                       // 领域模型 (26 文件)
+│   └── impl/                    // 14 个解析实现
+├── model/                       // 领域模型 (36 文件)
 │   ├── course/   (9)            // 课表相关
-│   ├── evaluation/ (11)         // 评教相关
+│   ├── evaluation/ (12)         // 评教相关
 │   ├── exam/     (3)            // 考试相关
 │   ├── grade/    (7)            // 成绩相关
 │   ├── notification/ (2)        // 通知相关
