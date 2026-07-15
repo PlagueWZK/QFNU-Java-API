@@ -734,3 +734,357 @@ QFNUAPIException (RuntimeException)
 | `CaptchaRecognitionException` | 所有 OCR 策略均未识别出合法验证码 | 考虑自定义 CaptchaService 或调整策略参数 |
 | `InvalidParameterException` | 用户传入的账号/密码/参数为 null 或非法 | 检查调用代码的参数 |
 | `ServiceCreationException` | 组件循环依赖或服务类型未注册 | 检查模块注册代码的依赖关系 |
+
+### 2.4 开发环境搭建
+
+**前置条件：**
+
+| 工具 | 最低版本 | 说明 |
+|------|----------|------|
+| JDK | 17 | 使用 Record、Switch 表达式等特性 |
+| Maven | 3.6+ | 构建和依赖管理 |
+| Git | 任意 | 版本控制 |
+
+**步骤 1：克隆仓库**
+
+```bash
+git clone https://github.com/PlagueWZK/QFNU-Java-API.git
+cd QFNU-Java-API
+```
+
+**步骤 2：配置本地凭据**
+
+```bash
+cp config.qfnuapi.properties.example config.qfnuapi.properties
+```
+
+编辑 `config.qfnuapi.properties`，填入真实教务系统学号和密码。此文件已被 `.gitignore` 忽略。
+
+**步骤 3：编译项目**
+
+```bash
+mvn compile
+```
+
+**步骤 4：运行测试**
+
+```bash
+# 运行所有单元测试（不需要连接教务系统）
+mvn test
+
+# 运行集成测试（需要凭据和网络）
+mvn test -Dgroups="integration"
+```
+
+**IDE 配置：**
+
+项目使用 Lombok 注解处理器，需要在 IDE 中启用：
+
+- **IntelliJ IDEA**：安装 Lombok 插件，在 Settings → Build → Compiler → Annotation Processors 中启用 "Enable annotation processing"
+- **Eclipse**：运行 Lombok jar 安装器，或在 eclipse.ini 中添加 `-javaagent:lombok.jar`
+
+### 2.5 添加新功能的标准流程
+
+以"考试安排"功能为例，展示从零添加一个完整功能模块的标准 6 步流程。
+
+#### 步骤概览
+
+```
+1. model/  → 定义领域 Record（数据模型）
+2. parser/ → 实现 HtmlParser<T>（HTML 解析器）
+3. service/ → 创建 Service 类（业务逻辑）
+4. core/QFNUAPI.java → 添加 API 端点
+5. core/QFNUBuiltinModule → 注册 Parser 和 Service
+6. 测试 → 编写单元测试 + 集成测试
+```
+
+#### 步骤 1：定义领域模型
+
+在 `model/exam/` 下创建 Record：
+
+```java
+// ExamSchedule.java
+package io.github.plaguewzk.qfnujavaapi.model.exam;
+
+public record ExamSchedule(
+    String index,        // 序号
+    String campus,       // 校区
+    String session,      // 场次
+    String courseId,     // 课程编号
+    String courseName,   // 课程名称
+    String instructor,   // 授课教师
+    String examTime,     // 考试时间
+    String examRoom,     // 考试地点
+    String seatNumber,   // 座位号
+    String admissionNo,  // 准考证号
+    String remarks,      // 备注
+    String operation     // 操作
+) {}
+```
+
+```java
+// ExamScheduleQuery.java
+package io.github.plaguewzk.qfnujavaapi.model.exam;
+
+public record ExamScheduleQuery(String xnxqid) {
+    public static Builder builder() { return new Builder(); }
+
+    public Map<String, String> toMap() {
+        Map<String, String> map = new LinkedHashMap<>();
+        if (xnxqid != null) map.put("xnxqid", xnxqid);
+        return map;
+    }
+
+    public static class Builder {
+        private String xnxqid;
+        public Builder xnxqid(Term term) { this.xnxqid = term.toString(); return this; }
+        public ExamScheduleQuery build() { return new ExamScheduleQuery(xnxqid); }
+    }
+}
+```
+
+**设计原则：**
+
+- 核心数据模型使用 `record`（不可变、自动生成 equals/hashCode/toString）
+- 查询参数对象使用 Builder 模式（可选参数灵活组合）
+- 提供 `toMap()` 方法将参数转为 HTTP 请求的 Query/Form 参数
+
+#### 步骤 2：实现 HTML 解析器
+
+在 `parser/impl/` 下实现 `HtmlParser<T>` 接口：
+
+```java
+// ExamScheduleParser.java
+package io.github.plaguewzk.qfnujavaapi.parser.impl;
+
+import io.github.plaguewzk.qfnujavaapi.model.exam.ExamSchedule;
+import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ExamScheduleParser implements HtmlParser<List<ExamSchedule>> {
+
+    @Override
+    public List<ExamSchedule> parser(String html) {
+        Document doc = Jsoup.parse(html);
+        List<ExamSchedule> schedules = new ArrayList<>();
+
+        Element table = doc.selectFirst("table");
+        if (table == null) return schedules;
+
+        Elements rows = table.select("tr");
+        for (int i = 1; i < rows.size(); i++) {  // 跳过表头
+            Elements cells = rows.get(i).select("td");
+            if (cells.size() < 10) continue;
+
+            schedules.add(new ExamSchedule(
+                cells.get(0).text(),
+                cells.get(1).text(),
+                // ... 映射剩余字段
+            ));
+        }
+        return schedules;
+    }
+}
+```
+
+**解析器编写要点：**
+
+- 使用 Jsoup 的 CSS 选择器定位元素
+- 跳过表头行（从 `i=1` 开始）
+- 处理异常情况：表格不存在、列数不足等，返回空列表而非抛异常
+- 使用 `ParserUtils` 中的公共方法（如存在）
+
+#### 步骤 3：创建 Service
+
+在 `service/` 下创建业务服务：
+
+```java
+// ExamScheduleService.java
+package io.github.plaguewzk.qfnujavaapi.service;
+
+public class ExamScheduleService {
+    private final QFNUExecutor qfnuExecutor;
+    private final HtmlParser<List<ExamSchedule>> examScheduleParser;
+
+    public ExamScheduleService(QFNUContext context,
+                                HtmlParser<List<ExamSchedule>> examScheduleParser) {
+        this.qfnuExecutor = context.executor();
+        this.examScheduleParser = Objects.requireNonNull(examScheduleParser, "examScheduleParser");
+    }
+
+    public List<ExamSchedule> getExamSchedules() {
+        return getExamSchedules(ExamScheduleQuery.builder()
+                .xnxqid(Term.current()).build());
+    }
+
+    public List<ExamSchedule> getExamSchedules(ExamScheduleQuery query) {
+        String html = qfnuExecutor.executePost(
+                QFNUAPI.EXAM_INFORMATION_LIST, query.toMap(), QFNUAPI.INDEX);
+        if (html.contains("未查询到数据")) return List.of();
+        return examScheduleParser.parser(html);
+    }
+}
+```
+
+**Service 编写要点：**
+
+- 构造函数接收 `QFNUContext`（运行时上下文）和所需的 `HtmlParser` 实例
+- 使用 `Objects.requireNonNull` 校验参数
+- 处理"未查询到数据"等特殊响应
+- 提供默认参数的重载方法（如 `getExamSchedules()`）
+
+#### 步骤 4：添加 API 端点
+
+在 `core/QFNUAPI.java` 枚举中添加新端点：
+
+```java
+// 考试信息查询
+EXAM_INFORMATION_LIST(BASE_URL.value + "/xsks/xsksap_list"),
+```
+
+端点命名规范：`模块_动作`，如 `EXAM_INFORMATION_LIST`、`GRADE_INQUIRY`。
+
+#### 步骤 5：注册组件
+
+在 `core/QFNUBuiltinModule.java` 中注册新的 Parser 和 Service：
+
+```java
+// 在 registerParsers() 中添加
+registry.registerParser(ExamScheduleParser.class,
+        resolver -> new ExamScheduleParser());
+
+// 在 registerServices() 中添加
+registry.registerService(ExamScheduleService.class,
+        resolver -> new ExamScheduleService(
+                resolver.context(),
+                resolver.parser(ExamScheduleParser.class)
+        ));
+```
+
+**注册要点：**
+
+- Parser 通常无依赖，直接 `new` 即可
+- 如果 Parser 依赖其他 Parser，通过 `resolver.parser(XxxParser.class)` 获取
+- Service 通过 `resolver.context()` 获取上下文，`resolver.parser()` 获取 Parser
+
+#### 步骤 6：编写测试
+
+```java
+// ExamScheduleParserTest.java (单元测试)
+class ExamScheduleParserTest {
+    private final ExamScheduleParser parser = new ExamScheduleParser();
+
+    @Test
+    void testParseValidHtml() {
+        String html = Files.readString(
+                Path.of("src/test/resources/exam_schedule_page.html"));
+        List<ExamSchedule> schedules = parser.parser(html);
+        assertFalse(schedules.isEmpty());
+        assertEquals("高等数学", schedules.get(0).courseName());
+    }
+
+    @Test
+    void testParseEmptyPage() {
+        String html = "<html><body>未查询到数据</body></html>";
+        List<ExamSchedule> schedules = parser.parser(html);
+        assertTrue(schedules.isEmpty());
+    }
+}
+```
+
+测试资源 HTML 文件从真实教务页面导出（浏览器 → 查看页面源代码 → 保存）。
+
+### 2.6 编码约定
+
+#### 领域模型
+
+- **使用 Java `record`** 定义领域模型（不可变性、自动生成样板代码）
+
+```java
+// ✅ 正确
+public record StudentInfo(String name, String studentId, String academy,
+                           String major, String className) {}
+
+// ❌ 避免
+public class StudentInfo {
+    private String name;  // 可变，需要 getter/setter
+    // ...
+}
+```
+
+- **查询参数对象使用 Builder 模式**：
+
+```java
+GradeQuery query = GradeQuery.builder()
+        .kksj("2025-2026-1")
+        .kcmc("Java")
+        .build();
+```
+
+#### 参数校验
+
+- **所有 public API 使用 `Objects.requireNonNull`**：
+
+```java
+public class CourseService {
+    public CourseService(QFNUContext context, HtmlParser<CourseTable> parser) {
+        this.parser = Objects.requireNonNull(parser, "parser");
+    }
+
+    public CourseTable getCourseTable(Term term, int week) {
+        Objects.requireNonNull(term, "term");
+        // ...
+    }
+}
+```
+
+#### 日志规范
+
+- **使用 SLF4J（`@Slf4j` 注解）**
+- **敏感信息只打 debug 日志**（密码、验证码结果）
+- **日志等级使用规则**：
+
+| 等级 | 用途 | 示例 |
+|------|------|------|
+| `ERROR` | 可恢复的错误 | 网络请求失败、单个课程自动评教失败 |
+| `WARN` | 非预期但可处理 | 验证码错误（会重试）、Session 即将过期 |
+| `INFO` | 关键状态变更 | 登录成功、登录失败、Session 自动续期 |
+| `DEBUG` | 开发调试（含敏感信息） | 请求 URL、验证码识别结果、Cookie 状态 |
+
+#### 时间类型
+
+- **统一使用 `LocalDate` / `LocalDateTime`**，不使用 `java.util.Date`
+- **格式化在 `Util.java` 中集中管理**：
+
+```java
+// Util.java
+public static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+```
+
+#### Parser 规范
+
+- **实现 `HtmlParser<T>` 泛型接口**：
+
+```java
+// ✅ 正确：明确泛型类型
+public class CourseParser implements HtmlParser<List<Course>> { }
+
+// ❌ 避免：不指定泛型类型
+public class CourseParser implements HtmlParser { }
+```
+
+- **解析异常时返回空集合而非 null**（列表类型的结果）
+- **页面结构变化时抛出 `PageStructureException`**
+
+#### 其他约定
+
+- 使用 Lombok 消除样板代码（`@Slf4j`、`@RequiredArgsConstructor`）
+- 枚举值使用 `UNDEFINED` 作为哨兵值，不使用 `null`
+- Switch 表达式使用 `->` 箭头语法
+- 静态内部类作为 Holder 实现懒加载单例
