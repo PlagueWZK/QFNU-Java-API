@@ -267,3 +267,220 @@ svc.finalSubmit(entries.get(0));
 | 最接近 90 分 | `CLOSEST_TO_90` | 动态搭配高低分，总分尽量接近 90 分 |
 
 `autoEvaluateAll()` 策略：前 40%（向下取整）课程使用 `CLOSEST_TO_FULL`，剩余使用 `CLOSEST_TO_90`。
+
+### 1.5 API 参考
+
+#### StudentService — 学生与评教
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getStudentInfo()` | `StudentInfo` | 获取当前登录学生的基本信息 |
+| `getEvaluationList()` | `List<EvaluationEntry>` | 获取待评价入口列表 |
+| `getEvaluationCourses(EvaluationEntry)` | `List<EvaluationCourse>` | 获取指定入口下的待评课程 |
+| `getEvaluationForm(EvaluationCourse)` | `EvaluationFormData` | 获取指定课程的评教表单（含指标和选项） |
+| `autoEvaluate(EvaluationCourse, EvaluationScheme)` | `EvaluationResult` | 为单个课程自动评分并保存 |
+| `autoEvaluateAll(EvaluationEntry)` | `List<EvaluationResult>` | 一键评完所有课程（前 40% 高分，后 60% 接近 90 分） |
+| `submitEvaluation(EvaluationSubmission)` | `void` | 提交评教表单（一般由 `autoEvaluate` 内部调用） |
+| `finalSubmit(EvaluationEntry)` | `void` | 最终提交评教（**提交后不可修改**） |
+
+#### CourseService — 课表
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getCurrentWeeklyScheduleFromMainPage()` | `WeeklySchedule` | 获取当天所在周的周课表（已弃用，推荐使用 `getCourseTable`） |
+| `getCourseTable(Term, int week)` | `CourseTable` | 获取指定学期、指定周的学期理论课表 |
+| `getCurrentCourseTable()` | `CourseTable` | 获取当前学期默认课表 |
+
+#### GradeService — 成绩
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getGradeList()` | `List<CourseGrade>` | 获取全部课程成绩（默认查询条件） |
+| `getGradeList(GradeQuery)` | `List<CourseGrade>` | 按条件查询课程成绩 |
+| `getGradeReport()` | `GradeReport` | 获取完整成绩报告（含 GPA、平均分等统计） |
+| `getGradeReport(GradeQuery)` | `GradeReport` | 按条件获取完整成绩报告 |
+
+#### ExamScheduleService — 考试安排
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getExamSchedules()` | `List<ExamSchedule>` | 获取当前学期所有考试安排 |
+| `getExamSchedules(ExamScheduleQuery)` | `List<ExamSchedule>` | 按学期查询考试安排 |
+
+#### NotificationService — 通知公告
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getList()` | `List<Notification>` | 获取通知列表（已自动填充详情） |
+| `fillDetail(Notification)` | `Notification` | 为指定通知填充详情（发布者、时间、正文） |
+
+#### LoginService — 登录与会话
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `autoLogin(int repeatCount)` | `void` | 执行自动登录，最多重试 `repeatCount` 次 |
+| `logout()` | `boolean` | 注销登录并清理本地 Cookie |
+
+> **注意**：`LoginService` 通常不需要手动调用。登录会在 `QFNUClient` 构建时自动执行，Session 过期时也会自动续期。
+
+### 1.6 验证码自定义
+
+SDK 内置基于 Tesseract OCR 的默认验证码识别服务（`DefaultCaptchaService`），无需额外配置即可使用。如果默认识别率不满足需求，可以实现 `CaptchaService` 接口替换。
+
+**默认识别流程：**
+
+```
+原始验证码图片
+  → 3x 双三次插值放大（Bicubic scaling）
+  → 二值化（固定阈值 170）
+  → 噪声去除（8 邻域孤立点过滤）
+  → Tesseract OCR（PSM 8 模式，仅识别数字和小写字母）
+  → 正则验证（^[0-9a-z]{4}$）
+```
+
+**自定义实现：**
+
+```java
+public class MyCaptchaService implements CaptchaService {
+    @Override
+    public String recognize(byte[] imageBytes) {
+        // 自定义识别逻辑
+        // 返回 4 位验证码字符串（数字 + 小写字母）
+        return "abcd";
+    }
+}
+
+// 注入自定义服务
+QFNUClient client = new QFNUClient.Builder()
+        .account("202xxxxxxx", "your-password")
+        .captchaService(new MyCaptchaService())
+        .build();
+```
+
+**关于 `CaptchaStrategyEvaluatorApp`：**
+
+项目提供了验证码策略评估工具，可通过 Maven 运行：
+
+```bash
+mvn exec:java -Dexec.mainClass="io.github.plaguewzk.qfnujavaapi.service.impl.CaptchaStrategyEvaluatorApp"
+```
+
+该工具对联机验证码批量评估不同预处理策略的成功率，方便调优。
+
+### 1.7 扩展模块开发
+
+通过 `QFNUModule` 接口，下游项目可以注册自定义的 Parser 和 Service，无需修改 SDK 源码。
+
+**QFNUModule 接口：**
+
+```java
+@FunctionalInterface
+public interface QFNUModule {
+    void configure(ParserRegistry parsers, ServiceRegistry services);
+}
+```
+
+**注册自定义 Parser：**
+
+```java
+public class CustomModule implements QFNUModule {
+    @Override
+    public void configure(ParserRegistry parsers, ServiceRegistry services) {
+        // 注册自定义解析器（无依赖）
+        parsers.registerParser(CustomParser.class,
+                resolver -> new CustomParser());
+
+        // 注册依赖其他 Parser 的解析器
+        parsers.registerParser(CompositeParser.class,
+                resolver -> new CompositeParser(
+                        resolver.parser(CustomParser.class)
+                ));
+    }
+}
+```
+
+**注册自定义 Service：**
+
+```java
+public class CustomModule implements QFNUModule {
+    @Override
+    public void configure(ParserRegistry parsers, ServiceRegistry services) {
+        // 注册自定义服务（依赖上下文 + Parser）
+        services.registerService(CustomService.class,
+                resolver -> new CustomService(
+                        resolver.context(),
+                        resolver.parser(CustomParser.class)
+                ));
+    }
+}
+```
+
+**安装模块：**
+
+```java
+QFNUClient client = new QFNUClient.Builder()
+        .account("202xxxxxxx", "your-password")
+        .install(new CustomModule())
+        .build();
+
+// 即可以类型安全的方式获取自定义服务
+CustomService svc = client.service(CustomService.class);
+```
+
+**依赖注入规则：**
+
+- `resolver.context()` — 获取 `QFNUContext`（含 executor、账号密码、CaptchaService）
+- `resolver.executor()` — 直接获取 `QFNUExecutor`
+- `resolver.parser(Class<T>)` — 获取已注册的 Parser 实例（自动懒加载 + 缓存）
+- `resolver.service(Class<T>)` — 获取已注册的 Service 实例
+
+> **设计约束**：Parser 可以依赖其他 Parser，Service 可以依赖 Parser，但 **Parser 不应依赖 Service**。依赖通过构造函数声明，由 `DefaultComponentResolver` 在实例化时自动注入。内置循环依赖检测，若检测到循环链路会抛出 `ServiceCreationException` 并打印完整链路。
+
+### 1.8 常见问题
+
+**Q: Session 过期后怎么处理？**
+
+SDK 内置 Session 自动续期机制。当 `SessionInterceptor` 检测到响应被重定向到登录页面或响应体包含登录表单时，会自动执行登录并重试原请求。整个过程对上层业务透明，无需手动处理。
+
+**Q: 验证码识别失败怎么办？**
+
+`LoginService.autoLogin()` 最多重试 20 次。每次重试会重新获取验证码图片并调用 OCR 识别。如果 20 次均失败，会抛出 `LoginFailedException`。可以通过以下方式改善：
+
+1. 实现自定义 `CaptchaService` 提高识别率
+2. 连接远程打码平台（如超级鹰）
+3. 使用 `CaptchaStrategyEvaluatorApp` 评估不同预处理策略
+
+**Q: 如何调整日志级别？**
+
+项目使用 SLF4J + Logback。修改 `src/main/resources/logback.xml`：
+
+```xml
+<!-- SDK 包日志级别设为 DEBUG 可查看详细网络请求和解析过程 -->
+<logger name="io.github.plaguewzk.qfnujavaapi" level="DEBUG"/>
+
+<!-- 生产环境建议 INFO 或 WARN -->
+<logger name="io.github.plaguewzk.qfnujavaapi" level="INFO"/>
+```
+
+> **注意**：密码和验证码结果的日志只会出现在 DEBUG 级别，生产环境使用 INFO 级别不会泄露敏感信息。
+
+**Q: 并发请求是否安全？**
+
+- `QFNUClient` 是线程安全的，可以多线程共享
+- `QFNUCookieJar` 使用 `ConcurrentHashMap` 存储 Cookie，支持线程安全读写
+- `DefaultComponentResolver` 使用 `ConcurrentHashMap` 缓存组件实例
+- Session 续期使用 `synchronized` 块，确保同一时刻只有一个线程执行登录
+- 各 Service 实例是无状态的，可以安全共享
+
+**Q: 请求超时了怎么办？**
+
+可以通过 `Builder.timeout()` 设置更长的超时时间：
+
+```java
+QFNUClient client = new QFNUClient.Builder()
+        .account("202xxxxxxx", "your-password")
+        .timeout(Duration.ofSeconds(30), Duration.ofSeconds(60))
+        .build();
+```
+
+如果教务系统本身不可达，会抛出 `NetworkException`。
