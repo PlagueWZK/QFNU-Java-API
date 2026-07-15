@@ -667,7 +667,7 @@ synchronized (this) {               // 同步块，防止并发登录
 | 参数 | 说明 | 默认主策略值 |
 |------|------|------------|
 | `name` | 策略名称 | `fixed-170-psm8` |
-| `pageSegMode` | Tesseract 页面分割模式 | `8`（单行文本） |
+| `pageSegMode` | Tesseract 页面分割模式 | `8`（单个单词，PSM_SINGLE_WORD） |
 | `pipeline` | 预处理流水线 | `FIXED_THRESHOLD` |
 | `fixedThreshold` | 二值化阈值 | `170` |
 | `scaleFactor` | 缩放倍数 | `3.0` |
