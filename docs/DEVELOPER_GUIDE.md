@@ -284,6 +284,14 @@ svc.finalSubmit(entries.get(0));
 | `submitEvaluation(EvaluationSubmission)` | `void` | 提交评教表单（一般由 `autoEvaluate` 内部调用） |
 | `finalSubmit(EvaluationEntry)` | `void` | 最终提交评教（**提交后不可修改**） |
 
+**相关模型：**
+
+| Record | 字段 |
+|--------|------|
+| `StudentInfo` | `name` 姓名, `studentId` 学号, `academy` 学院, `major` 专业, `className` 班级 |
+| `EvaluationEntry` | `index` 序号, `term` 学期, `category` 分类, `batch` 批次, `startDate`/`endDate` 起止时间, `pj0502id` 批次ID, `pj01id` 分类ID, `enterUrl` 入口URL |
+| `EvaluationResult` | `course` 课程, `scheme` 评分方案, `success` 是否成功, `score` 总分, `errorMessage` 错误信息 |
+
 #### CourseService — 课表
 
 | 方法 | 返回值 | 说明 |
@@ -291,6 +299,15 @@ svc.finalSubmit(entries.get(0));
 | `getCurrentWeeklyScheduleFromMainPage()` | `WeeklySchedule` | 获取当天所在周的周课表（已弃用，推荐使用 `getCourseTable`） |
 | `getCourseTable(Term, int week)` | `CourseTable` | 获取指定学期、指定周的学期理论课表 |
 | `getCurrentCourseTable()` | `CourseTable` | 获取当前学期默认课表 |
+
+**相关模型：**
+
+| Record | 字段 |
+|--------|------|
+| `Course` | `weekday` 星期几, `courseName` 课程名, `weeks` 周次范围, `section` 节次, `location` 上课地点, `teacher` 授课教师 |
+| `CourseTable` | `term` 学期, `week` 周数, `courses` 课程列表, `note` 备注, `remark` 标记 |
+| `WeeklySchedule` | `currentWeek` 当前周, `term` 学期, `courseList` 课程信息列表 |
+| `CourseInfo` | `courseName` 课程名, `credits` 学分, `property` 课程属性, `className` 班级, `location` 地点, `rawTime` 原始时间, `dayOfWeek`/`startNode`/`endNode` 星期/开始节/结束节, `week` 周次 |
 
 #### GradeService — 成绩
 
@@ -301,12 +318,25 @@ svc.finalSubmit(entries.get(0));
 | `getGradeReport()` | `GradeReport` | 获取完整成绩报告（含 GPA、平均分等统计） |
 | `getGradeReport(GradeQuery)` | `GradeReport` | 按条件获取完整成绩报告 |
 
+**相关模型：**
+
+| Record | 字段 |
+|--------|------|
+| `CourseGrade` | `serialNumber` 序号, `startSemester` 开课学期, `courseId` 课程编号, `courseName` 课程名, `groupName` 分组名, `grade` 成绩, `gradeSymbol` 成绩符号, `credit` 学分, `classHours` 课时, `gradePointAverage` 绩点, `makeUpSemester` 补考学期, `assessmentMethod` 考核方式, `examinationNature` 考试性质, `courseAttributes` 课程属性, `courseNature` 课程性质, `courseCategories` 课程类别 |
+| `GradeReport` | `queryCondition` 查询条件描述, `totalCourseCount` 课程总数, `totalCredits` 总学分, `averageCreditGradePoint` 平均学分绩点, `averageScore` 平均分, `grades` 成绩列表 |
+
 #### ExamScheduleService — 考试安排
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
 | `getExamSchedules()` | `List<ExamSchedule>` | 获取当前学期所有考试安排 |
 | `getExamSchedules(ExamScheduleQuery)` | `List<ExamSchedule>` | 按学期查询考试安排 |
+
+**相关模型：**
+
+| Record | 字段 |
+|--------|------|
+| `ExamSchedule` | `index` 序号, `campus` 校区, `session` 场次, `courseId` 课程编号, `courseName` 课程名, `instructor` 教师, `examTime` 考试时间, `examRoom` 考场, `seatNumber` 座位号, `admissionNo` 准考证号, `remarks` 备注, `operation` 操作 |
 
 #### NotificationService — 通知公告
 
@@ -315,6 +345,12 @@ svc.finalSubmit(entries.get(0));
 | `getList()` | `List<Notification>` | 获取通知列表（已自动填充详情） |
 | `fillDetail(Notification)` | `Notification` | 为指定通知填充详情（发布者、时间、正文） |
 
+**相关模型：**
+
+| Record | 字段 |
+|--------|------|
+| `Notification` | `id` 通知ID, `title` 标题, `publisher` 发布者, `datetime` 发布时间字符串, `content` 正文, `html` 原始HTML, `loaded` 是否已加载详情；附加方法 `publishTime()` 返回 `LocalDateTime` |
+
 #### LoginService — 登录与会话
 
 | 方法 | 返回值 | 说明 |
@@ -322,7 +358,16 @@ svc.finalSubmit(entries.get(0));
 | `autoLogin(int repeatCount)` | `void` | 执行自动登录，最多重试 `repeatCount` 次 |
 | `logout()` | `boolean` | 注销登录并清理本地 Cookie |
 
-> **注意**：`LoginService` 通常不需要手动调用。登录会在 `QFNUClient` 构建时自动执行，Session 过期时也会自动续期。
+> **注意**：`LoginService` 通常不需要手动调用。登录不会在 `QFNUClient` 构建时立即执行，而是在首次发起 HTTP 请求时由 `SessionInterceptor` 检测到未登录状态后自动触发。Session 过期时也会自动续期。
+
+**常用参数对象：**
+
+| 类 | 构建方式 | 关键字段/方法 |
+|----|----------|------------|
+| `Term` | `Term.current()` 当前学期；`Term.of("2025-2026-2")` | `toString()` 返回学期编码，如 `"2025-2026-2"` |
+| `GradeQuery` | `GradeQuery.builder().kksj(term).kcxz(nature).kcmc(name).build()` | `kksj` 开课学期, `kcxz` 课程性质, `kcmc` 课程名称（模糊）, `xsfs` 显示模式；`toMap()` 转为请求参数 |
+| `ExamScheduleQuery` | `ExamScheduleQuery.builder().xnxqid(term).build()` | `xnxqid` 学期, `xqlb` 学期类别；`toMap()` 转为请求参数 |
+| `CourseNature` | `CourseNature.fromValue("01")` | 课程性质枚举：`displayName` 显示名, `value` 编码值 |
 
 ### 1.6 验证码自定义
 
@@ -445,7 +490,7 @@ SDK 内置 Session 自动续期机制。当 `SessionInterceptor` 检测到响应
 
 **Q: 验证码识别失败怎么办？**
 
-`LoginService.autoLogin()` 最多重试 20 次。每次重试会重新获取验证码图片并调用 OCR 识别。如果 20 次均失败，会抛出 `LoginFailedException`。可以通过以下方式改善：
+`LoginService.autoLogin()` 最多重试 10 次。每次重试会重新获取验证码图片并调用 OCR 识别。如果 10 次均失败，会抛出 `LoginFailedException`。可以通过以下方式改善：
 
 1. 实现自定义 `CaptchaService` 提高识别率
 2. 连接远程打码平台（如超级鹰）
@@ -726,7 +771,7 @@ QFNUAPIException (RuntimeException)
 | 异常 | 触发场景 | 处理建议 |
 |------|----------|----------|
 | `InvalidCredentialsException` | 登录时服务端返回"密码错误"或"账号不存在" | 检查账号密码是否正确 |
-| `LoginFailedException` | 20 次验证码识别 + 登录重试均失败 | 检查网络、验证码识别率、教务系统状态 |
+| `LoginFailedException` | 10 次验证码识别 + 登录重试均失败 | 检查网络、验证码识别率、教务系统状态 |
 | `SessionRefreshException` | Session 过期后自动重新登录失败 | 检查网络和教务系统状态 |
 | `NetworkException` | HTTP 请求失败、响应码非 2xx、读取响应体失败 | 检查网络连通性和教务系统可达性 |
 | `PageStructureException` | 页面结构变化（预期元素不存在、API 地址非法） | 教务系统可能更新了页面结构，需要更新解析器 |
