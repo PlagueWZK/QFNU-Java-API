@@ -30,6 +30,7 @@
   - [2.7 测试指南](#27-测试指南)
   - [2.8 提交规范](#28-提交规范)
   - [2.9 发布流程](#29-发布流程)
+  - [附录](#附录)
 
 ---
 
@@ -1088,3 +1089,242 @@ public class CourseParser implements HtmlParser { }
 - 枚举值使用 `UNDEFINED` 作为哨兵值，不使用 `null`
 - Switch 表达式使用 `->` 箭头语法
 - 静态内部类作为 Holder 实现懒加载单例
+
+### 2.7 测试指南
+
+#### 测试分类
+
+| 类型 | 位置 | 标记 | 说明 |
+|------|------|------|------|
+| **单元测试** | `src/test/.../parser/` | 无 | 测试 Parser 解析逻辑，使用离线 HTML fixture，不需要网络 |
+| **模型测试** | `src/test/.../model/` | 无 | 测试 Record 的 equals/hashCode、Builder、toMap 等方法 |
+| **核心层测试** | `src/test/.../core/` | 无 | 测试 ComponentResolver、SessionInterceptor 等 |
+| **集成测试** | `src/test/.../service/` | `@Tag("integration")` | 端到端测试 Service，需要真实凭据和网络 |
+| **客户端测试** | `src/test/.../QFNUClientTest.java` | 无 | 测试 Builder 参数校验 |
+
+#### 测试 Fixture 规范
+
+- 单元测试 HTML fixture 从真实教务页面导出
+- 导出方式：浏览器 → 登录教务系统 → 目标页面 → 查看页面源代码 → 保存到 `src/test/resources/`
+- Fixture 文件命名：`<功能>_page.html`，如 `exam_schedule_page.html`
+- **不要修改 fixture 中的 HTML**，保留原始结构以检测页面结构变化
+
+#### 运行命令
+
+```bash
+# 运行全部测试
+mvn test
+
+# 运行单个测试类
+mvn test -Dtest="CourseTableParseTest"
+
+# 运行单个测试方法
+mvn test -Dtest="CourseTableParseTest#testWeekdayMapping"
+
+# 运行集成测试（需要 qfnuapi 凭据和网络）
+mvn test -Dgroups="integration"
+
+# 构建时跳过测试
+mvn package -DskipTests
+```
+
+#### 编写新测试的规范
+
+```java
+class XxxParserTest {
+
+    private final XxxParser parser = new XxxParser();
+
+    @Test
+    @DisplayName("正常 HTML 解析应返回正确的对象列表")
+    void testParseValidHtml() throws Exception {
+        // Arrange
+        String html = Files.readString(
+            Path.of("src/test/resources/xxx_page.html"));
+
+        // Act
+        List<Xxx> result = parser.parser(html);
+
+        // Assert
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals("期望值", result.get(0).someField());
+    }
+
+    @Test
+    @DisplayName("空数据页面应返回空列表")
+    void testParseEmptyPage() {
+        String html = "<html>未查询到数据</html>";
+        List<Xxx> result = parser.parser(html);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("null 或空字符串输入不应抛异常")
+    void testParseNullOrEmpty() {
+        assertDoesNotThrow(() -> parser.parser(""));
+        assertDoesNotThrow(() -> parser.parser(null));
+    }
+}
+```
+
+关键原则：
+- 使用 `@DisplayName` 描述测试意图
+- 测试空数据、null 输入、结构变化等边界情况
+- 每个 Parser 至少 2 个测试用例（正常 + 空数据）
+
+### 2.8 提交规范
+
+#### Commit Message 格式
+
+遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
+```
+<type>(<scope>): <简短描述>
+
+<详细说明（可选）>
+
+<关联 Issue（可选）>
+```
+
+**Type 类型：**
+
+| Type | 用途 | 示例 |
+|------|------|------|
+| `feat` | 新功能 | `feat(evaluation): 完成学生评教自动化功能` |
+| `fix` | Bug 修复 | `fix(parser): 修复课表解析中周次映射错误` |
+| `refactor` | 代码重构 | `refactor(core): 重构组件注册与 DI 逻辑` |
+| `docs` | 文档更新 | `docs: 更新 README 示例代码` |
+| `test` | 测试相关 | `test(parser): 添加成绩解析器边界测试` |
+| `chore` | 构建/工具 | `chore: 升级 OkHttp 到 4.12.0` |
+| `style` | 代码风格 | `style: 统一缩进格式` |
+
+**Scope 范围：**
+
+| Scope | 关联包 |
+|-------|--------|
+| `core` | 核心框架层 |
+| `parser` | 解析层 |
+| `service` | 业务服务层 |
+| `model` | 领域模型层 |
+| `exception` | 异常体系 |
+| `evaluation` | 评教功能 |
+
+#### 分支策略
+
+```
+main          ← 稳定发布分支
+  └── dev     ← 开发主分支
+       └── feat/xxx  ← 功能分支
+       └── fix/xxx   ← 修复分支
+```
+
+- `main` — 稳定版本，只接受来自 `dev` 的 Merge
+- `dev` — 日常开发提交到此分支
+- `feat/xxx` — 大功能使用单独分支开发后合并到 `dev`
+- 小改动直接在 `dev` 上提交
+
+### 2.9 发布流程
+
+#### 版本号规则
+
+遵循语义化版本（[SemVer](https://semver.org/lang/zh-CN/)）：
+
+```
+主版本号.次版本号.修订号
+  0  .  0  .  1
+
+MAJOR — 不兼容的 API 修改
+MINOR — 向下兼容的新功能
+PATCH — 向下兼容的 Bug 修复
+```
+
+当前版本：`0.0.1-SNAPSHOT`（开发中，尚未正式发布）。
+
+#### 发布到本地 Maven 仓库
+
+```bash
+# 编译并安装到 ~/.m2/repository
+mvn clean install -DskipTests
+```
+
+下游项目即可通过 Maven 坐标引入：
+
+```xml
+<dependency>
+    <groupId>io.github.plaguewzk</groupId>
+    <artifactId>qfnu-java-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+#### 未来发布到 Maven Central（规划中）
+
+1. 在 `pom.xml` 中配置 `distributionManagement` 和凭据
+2. 注册 Sonatype JIRA 账号并申请 `io.github.plaguewzk` Group ID
+3. 配置 GPG 签名
+4. 执行 `mvn clean deploy`
+5. 在 Sonatype Nexus 中 Release
+
+> 正式发布流程将在项目稳定后详细记录。
+
+---
+
+## 附录
+
+### 项目文件结构速查
+
+```
+io.github.plaguewzk.qfnujavaapi
+├── QFNUClient.java              // 客户端入口 (Builder)
+├── core/                        // 核心框架 (13 文件)
+│   ├── QFNUAPI.java             // API 端点枚举
+│   ├── QFNUExecutor.java        // HTTP 执行器
+│   ├── QFNUCookieJar.java       // Cookie 管理
+│   ├── SessionInterceptor.java  // Session 拦截
+│   ├── QFNUContext.java         // 运行时上下文
+│   ├── ComponentRegistry.java   // 组件注册表
+│   ├── DefaultComponentResolver.java // DI 容器
+│   ├── ComponentResolver.java   // 解析器接口
+│   ├── ComponentProvider.java   // 组件工厂函数
+│   ├── ParserRegistry.java      // Parser 注册接口
+│   ├── ServiceRegistry.java     // Service 注册接口
+│   ├── QFNUModule.java          // 扩展模块接口
+│   └── QFNUBuiltinModule.java   // 内置模块
+├── service/                     // 业务层 (7 文件)
+│   ├── CaptchaService.java
+│   ├── LoginService.java
+│   ├── StudentService.java
+│   ├── CourseService.java
+│   ├── GradeService.java
+│   ├── ExamScheduleService.java
+│   └── NotificationService.java
+├── parser/                      // 解析层 (15 文件)
+│   ├── HtmlParser.java          // 解析接口
+│   ├── ParserUtils.java         // 公共工具
+│   └── impl/                    // 13 个解析实现
+├── model/                       // 领域模型 (26 文件)
+│   ├── course/   (9)            // 课表相关
+│   ├── evaluation/ (11)         // 评教相关
+│   ├── exam/     (3)            // 考试相关
+│   ├── grade/    (7)            // 成绩相关
+│   ├── notification/ (2)        // 通知相关
+│   └── student/  (1)            // 学生信息
+├── exception/                   // 异常体系 (13 文件)
+└── util/
+    └── Util.java                // 工具方法
+```
+
+### Maven 依赖一览
+
+| 依赖 | GroupId | ArtifactId | 版本 | Scope |
+|------|---------|------------|------|-------|
+| Lombok | org.projectlombok | lombok | 1.18.42 | provided |
+| OkHttp | com.squareup.okhttp3 | okhttp | 4.12.0 | compile |
+| Jsoup | org.jsoup | jsoup | 1.17.2 | compile |
+| Tess4J | net.sourceforge.tess4j | tess4j | 5.10.0 | compile |
+| SLF4J | org.slf4j | slf4j-api | 2.0.12 | compile |
+| Logback | ch.qos.logback | logback-classic | 1.5.22 | test |
+| JUnit API | org.junit.jupiter | junit-jupiter-api | 5.10.2 | test |
+| JUnit Engine | org.junit.jupiter | junit-jupiter-engine | 5.10.2 | test |
+```
