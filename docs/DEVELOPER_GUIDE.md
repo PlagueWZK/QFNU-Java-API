@@ -484,3 +484,253 @@ QFNUClient client = new QFNUClient.Builder()
 ```
 
 如果教务系统本身不可达，会抛出 `NetworkException`。
+
+---
+
+## 第二部分：贡献者指南
+
+### 2.1 项目架构深度解析
+
+#### 分层架构
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  QFNUClient (入口层)                                      │
+│  Builder 模式构建，提供 service(Class<T>) 统一服务获取      │
+├──────────────────────────────────────────────────────────┤
+│  core/ (核心框架层)                                        │
+│  QFNUExecutor → SessionInterceptor → QFNUCookieJar       │
+│  ComponentRegistry + DefaultComponentResolver (DI容器)    │
+│  QFNUContext (运行时上下文)                                │
+├──────────────────────┬───────────────────────────────────┤
+│  service/ (业务服务层) │  parser/ (解析层)                  │
+│  LoginService        │  HtmlParser<T> 接口                 │
+│  StudentService      │  impl/ (13 个解析器)                │
+│  CourseService       │  ParserUtils (公共工具)             │
+│  GradeService        │                                     │
+│  ExamScheduleService │                                     │
+│  NotificationService │                                     │
+├──────────────────────┴───────────────────────────────────┤
+│  model/ (领域模型层)                                       │
+│  course/ | evaluation/ | exam/ | grade/ | notification/  │
+│  student/ (全部为 Java Record，不可变)                     │
+└──────────────────────────────────────────────────────────┘
+```
+
+#### 各层职责
+
+| 层 | 包路径 | 职责 |
+|----|--------|------|
+| 入口层 | `QFNUClient.java` | Builder 模式构建客户端，组装各层组件，暴露统一 API |
+| 核心框架层 | `core/` | HTTP 执行、Cookie 管理、Session 拦截、组件注册与 DI |
+| 业务服务层 | `service/` | 组合 HTTP 调用 + Parser，暴露面向业务的 API |
+| 解析层 | `parser/` | `HtmlParser<T>` 接口实现，将 HTML 字符串解析为 Java Record |
+| 领域模型层 | `model/` | 不可变 Java Record，按业务领域分 5 个子包 |
+
+#### 包依赖规则
+
+```
+入口层 (QFNUClient)
+  ↓
+业务服务层 (service/) ──→ 解析层 (parser/)
+  ↓                           ↓
+核心框架层 (core/) ←──────────┘
+  ↓
+领域模型层 (model/)
+```
+
+**关键规则**：
+- **Parser 可以依赖其他 Parser** — 例如 `CourseTableParse` 依赖 `CourseParser`，在注册时通过 `resolver.parser(CourseParser.class)` 声明
+- **Service 可以依赖 Parser** — 通过构造函数接收 `HtmlParser<T>` 接口
+- **Parser 不应依赖 Service** — 保持解析层的纯粹性和可测试性
+
+#### 核心文件索引
+
+| 文件 | 角色 |
+|------|------|
+| `QFNUClient.java` | 客户端入口，Builder 模式 |
+| `core/QFNUAPI.java` | 所有 API 端点的枚举定义 |
+| `core/QFNUExecutor.java` | OkHttpClient 封装，GET/POST/formPost |
+| `core/QFNUCookieJar.java` | Cookie 持久化，基于 ConcurrentHashMap |
+| `core/SessionInterceptor.java` | OkHttp Interceptor，检测 Session 过期并自动续期 |
+| `core/QFNUContext.java` | 运行时上下文（executor + 凭据 + CaptchaService） |
+| `core/ComponentRegistry.java` | 同时实现 ParserRegistry 和 ServiceRegistry |
+| `core/DefaultComponentResolver.java` | DI 容器，懒加载 + 缓存 + 循环依赖检测 |
+| `core/QFNUModule.java` | 扩展接口 `@FunctionalInterface` |
+| `core/QFNUBuiltinModule.java` | 内置模块，注册所有默认 Parser 和 Service |
+| `core/ComponentProvider.java` | 组件工厂函数 `@FunctionalInterface` |
+| `core/ComponentResolver.java` | 组件解析器接口（context/executor/parser/service） |
+| `core/ParserRegistry.java` | Parser 注册扩展点接口 |
+| `core/ServiceRegistry.java` | Service 注册扩展点接口 |
+
+### 2.2 核心机制详解
+
+#### 组件注册与依赖注入
+
+这是项目最核心的扩展机制。旧版本使用 `ParserFactory` 和 `ServiceFactory` 两个独立的工厂类，存在相互引用和时序耦合问题。最新重构后的设计：
+
+**1. 注册阶段（QFNUClient 构建时）：**
+
+```
+QFNUBuiltinModule.configure(registry, registry)
+  → registry.registerParser(CourseParser.class, resolver -> new CourseParser())
+  → registry.registerService(CourseService.class, resolver -> new CourseService(...))
+
+用户扩展模块:
+  → customModule.configure(registry, registry)
+```
+
+`ComponentRegistry` 同时实现 `ParserRegistry` 和 `ServiceRegistry`，内部用两个 `LinkedHashMap<Class<?>, ComponentProvider<?>>` 存储 Parser 和 Service 的懒加载工厂函数。`LinkedHashMap` 保证注册顺序，方便调试。
+
+**2. 解析阶段（首次调用时）：**
+
+```java
+// 用户调用
+client.service(CourseService.class);
+
+// 内部流程:
+DefaultComponentResolver.service(CourseService.class)
+  → serviceCache.get(CourseService.class)  // 检查缓存
+  → null? → checkCircularDependency()       // 循环依赖检测
+  → serviceRegistry.get(CourseService.class) // 查找 Provider
+  → provider.get(resolver)                   // 调用工厂函数
+  → resolver.parser(WeeklyScheduleParser.class) // 触发 Parser 懒加载
+  → serviceCache.putIfAbsent()              // 缓存实例
+```
+
+**3. 循环依赖检测：**
+
+使用 `ThreadLocal<LinkedHashSet<Class<?>>>` 追踪当前线程的创建链。当检测到同一类型再次出现时，抛出 `ServiceCreationException` 并打印完整链路，例如：
+
+```
+检测到组件循环依赖，无法创建解析器 [CourseParser]
+创建链路: CourseTableParse → CourseParser → CourseTableParse (回到起点)
+```
+
+**4. 线程安全：**
+
+- 缓存使用 `ConcurrentHashMap`，支持多线程并发访问
+- `get` + `putIfAbsent` 模式：多线程可能同时穿透缓存，但 `putIfAbsent` 确保最终只缓存第一个成功的实例
+- 显式避免了 `computeIfAbsent`（其内置递归检测会在 ThreadLocal 检查前触发）
+
+#### HTTP 执行链
+
+```
+QFNUClient
+  → QFNUExecutor (OkHttpClient 封装)
+     → SessionInterceptor (OkHttp Interceptor)
+        → 检测 Session 过期 (URL 重定向 / Body 登录表单)
+        → synchronized 执行自动登录
+        → 重试原请求
+     → QFNUCookieJar (CookieJar 实现)
+        → ConcurrentHashMap<String, List<Cookie>>
+        → 过期 Cookie 自动清理
+```
+
+**QFNUExecutor** 提供的方法：
+
+| 方法 | 用途 |
+|------|------|
+| `executeGet(QFNUAPI)` | 简单 GET 请求 |
+| `executeGet(QFNUAPI, Map<String,String>)` | 带 Query 参数的 GET |
+| `executePost(QFNUAPI, Map<String,String>, String/QFNUAPI)` | 标准 POST（FormBody） |
+| `executeFormPost(QFNUAPI, String, String/QFNUAPI)` | URL 编码字符串 POST（支持重复 key） |
+| `buildUrl(QFNUAPI, Map<String,String>)` | 构建带参数的完整 URL |
+| `executeForBytes(Request)` | 返回响应字节数组（用于验证码图片） |
+| `executeForString(Request)` | 返回响应字符串（用于页面解析） |
+
+#### Session 过期检测与自动续期
+
+`SessionInterceptor` 的判断逻辑（`isSessionExpired` 方法）：
+
+1. **跳过检测的请求**：首页、登录接口、验证码接口、退出登录接口 — 这些请求不需要登录
+2. **URL 重定向检测**：检查 response URL 是否被重定向到 `/jsxsd/` 或 `/xk/LoginToXk`（登录页面）
+3. **Body 内容检测**：检查响应体是否包含登录表单标记（"请输入账号" + "请输入密码" + "请输入验证码"）
+
+一旦检测到过期：
+
+```
+response.close()                    // 关闭过期响应
+synchronized (this) {               // 同步块，防止并发登录
+    loginAction.run()               // 调用 QFNUClient.login()
+      → service(LoginService.class).autoLogin(10)
+    chain.proceed(newRequest)       // 用新的 Cookie 重试原请求
+}
+```
+
+登录失败抛出 `SessionRefreshException`。
+
+#### 验证码 OCR 策略
+
+`DefaultCaptchaService` 支持多策略流水线，通过 `StrategySpec` record 定义每个策略的参数：
+
+| 参数 | 说明 | 默认主策略值 |
+|------|------|------------|
+| `name` | 策略名称 | `fixed-170-psm8` |
+| `pageSegMode` | Tesseract 页面分割模式 | `8`（单行文本） |
+| `pipeline` | 预处理流水线 | `FIXED_THRESHOLD` |
+| `fixedThreshold` | 二值化阈值 | `170` |
+| `scaleFactor` | 缩放倍数 | `3.0` |
+
+**三种预处理流水线：**
+
+| 流水线 | 枚举 | 说明 |
+|--------|------|------|
+| `FIXED_THRESHOLD` | 固定阈值二值化 | 灰度 < 阈值 → 黑色，默认阈值 170 |
+| `OTSU` | 大津算法 | 自适应计算最优阈值 |
+| `CONTRAST` | 对比度归一化 | 拉伸至全色域 [0, 255] |
+
+**Tesseract 配置：**
+
+```java
+tesseract.setLanguage("eng");
+tesseract.setPageSegMode(8);  // PSM_SINGLE_WORD
+tesseract.setVariable("tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyz");
+tesseract.setVariable("load_system_dawg", "F");
+tesseract.setVariable("load_freq_dawg", "F");
+tesseract.setVariable("user_defined_dpi", "300");
+```
+
+- 字符白名单限制为数字和小写字母（教务验证码只包含这些字符）
+- 关闭词典和频率 DAWG，避免"纠正"成常见英文单词
+- 设置 DPI 300 提高识别精度
+
+识别结果通过正则 `^[0-9a-z]{4}$` 验证，不符合的自动尝试下一个策略。
+
+### 2.3 异常体系
+
+所有异常继承自 `QFNUAPIException (RuntimeException)`，使用者无需强制 try-catch。
+
+#### 异常树状图
+
+```
+QFNUAPIException (RuntimeException)
+├── AuthenticationException            // 认证相关异常
+│   ├── InvalidCredentialsException    // 账号或密码错误（不可重试）
+│   ├── LoginFailedException           // 登录失败（达到最大重试次数）
+│   └── SessionRefreshException        // Session 刷新失败
+├── NetworkException                   // 网络请求失败
+├── ParseException                     // HTML 解析异常
+│   ├── PageStructureException         // 页面结构变化
+│   └── ParsingErrorException          // 解析过程错误
+├── CaptchaException                   // 验证码相关异常
+│   ├── CaptchaInitializationException // 验证码引擎初始化失败
+│   └── CaptchaRecognitionException    // 验证码识别失败
+├── InvalidParameterException          // 参数校验失败
+└── ServiceCreationException           // 服务/组件创建失败（含循环依赖）
+```
+
+#### 异常触发场景
+
+| 异常 | 触发场景 | 处理建议 |
+|------|----------|----------|
+| `InvalidCredentialsException` | 登录时服务端返回"密码错误"或"账号不存在" | 检查账号密码是否正确 |
+| `LoginFailedException` | 20 次验证码识别 + 登录重试均失败 | 检查网络、验证码识别率、教务系统状态 |
+| `SessionRefreshException` | Session 过期后自动重新登录失败 | 检查网络和教务系统状态 |
+| `NetworkException` | HTTP 请求失败、响应码非 2xx、读取响应体失败 | 检查网络连通性和教务系统可达性 |
+| `PageStructureException` | 页面结构变化（预期元素不存在、API 地址非法） | 教务系统可能更新了页面结构，需要更新解析器 |
+| `ParsingErrorException` | 解析过程中发生格式异常 | 检查 HTML fixture 或联系维护者 |
+| `CaptchaInitializationException` | Tesseract 引擎初始化失败（训练数据缺失） | 检查 tessdata 文件是否在 classpath 中 |
+| `CaptchaRecognitionException` | 所有 OCR 策略均未识别出合法验证码 | 考虑自定义 CaptchaService 或调整策略参数 |
+| `InvalidParameterException` | 用户传入的账号/密码/参数为 null 或非法 | 检查调用代码的参数 |
+| `ServiceCreationException` | 组件循环依赖或服务类型未注册 | 检查模块注册代码的依赖关系 |
