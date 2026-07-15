@@ -17,6 +17,14 @@
   - [1.3 配置说明](#13-配置说明)
   - [1.4 快速开始](#14-快速开始)
   - [1.5 API 参考](#15-api-参考)
+    - [1.5.1 API 端点一览](#151-api-端点一览)
+    - [1.5.2 StudentService](#152-studentservice--学生与评教)
+    - [1.5.3 CourseService](#153-courseservice--课表)
+    - [1.5.4 GradeService](#154-gradeservice--成绩)
+    - [1.5.5 ExamScheduleService](#155-examscheduleservice--考试安排)
+    - [1.5.6 NotificationService](#156-notificationservice--通知公告)
+    - [1.5.7 LoginService](#157-loginservice--登录与会话)
+    - [1.5.8 其他模型](#158-其他模型)
   - [1.6 验证码自定义](#16-验证码自定义)
   - [1.7 扩展模块开发](#17-扩展模块开发)
   - [1.8 常见问题](#18-常见问题)
@@ -271,7 +279,30 @@ svc.finalSubmit(entries.get(0));
 
 ### 1.5 API 参考
 
-#### StudentService — 学生与评教
+#### 1.5.1 API 端点一览
+
+所有端点定义在 `core/QFNUAPI.java` 枚举中，基址为 `http://zhjw.qfnu.edu.cn/jsxsd`。
+
+| 端点常量 | URL Path | 用途 |
+|----------|----------|------|
+| `CAPTCHA` | `/verifycode.servlet` | 获取验证码图片 |
+| `LOGIN_POST` | `/xk/LoginToXkLdap` | 登录认证 |
+| `LOGOUT_APP` | `/xk/LoginToXk` | 业务系统注销 |
+| `LOGOUT_CAS` | `https://ids.qfnu.edu.cn/authserver/logout` | CAS 认证注销 |
+| `MAIN_NEW_PAGE` | `/framework/xsMain_new.jsp` | 学生主页 |
+| `MAIN_INDEX_LOAD_COURSE` | `/framework/main_index_loadkb.jsp` | 加载主页课表 |
+| `MAIN_INDEX_NOTIFICATION_LIST` | `/framework/main_index_loadtzgg.jsp` | 加载通知列表 |
+| `MAIN_INDEX_NOTIFICATION` | `/framework/main_index_tzgg.jsp` | 通知详情（需 `id` 参数） |
+| `STUDENT_COURSE_LIST` | `/xskb/xskb_list.do` | 学期理论课表 |
+| `GRADE_INQUIRY` | `/kscj/cjcx_list` | 成绩查询 |
+| `EXAM_INFORMATION_LIST` | `/xsks/xsksap_list` | 考试安排 |
+| `STUDENT_FEEDBACK` | `/xspj/xspj_find.do` | 评教入口列表 |
+| `STUDENT_EVALUATION_COURSES` | `/xspj/xspj_list.do` | 评教课程列表 |
+| `STUDENT_EVALUATION_FORM` | `/xspj/xspj_edit.do` | 评教表单 |
+| `STUDENT_EVALUATION_SAVE` | `/xspj/xspj_save.do` | 保存评教 |
+| `STUDENT_EVALUATION_FINAL_SUBMIT` | `/xspj/toSavepj03wjpj.do` | 最终提交评教 |
+
+#### 1.5.2 StudentService — 学生与评教
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
@@ -290,13 +321,21 @@ svc.finalSubmit(entries.get(0));
 |--------|------|
 | `StudentInfo` | `name` 姓名, `studentId` 学号, `academy` 学院, `major` 专业, `className` 班级 |
 | `EvaluationEntry` | `index` 序号, `term` 学期, `category` 分类, `batch` 批次, `startDate`/`endDate` 起止时间, `pj0502id` 批次ID, `pj01id` 分类ID, `enterUrl` 入口URL |
+| `EvaluationCourse` | `index` 序号, `courseId` 课程编号, `courseName` 课程名, `teacher` 教师, `evalCategory` 评教类别, `totalScore` 总评分, `evaluated`/`submitted` 是否已评/已提交, `evalUrl` 评价URL, `jx02id`/`jx0404id`/`jg0101id`/`xsflid`/`zpf` 标识字段 |
+| `EvaluationFormData` | `courseName` 课程名, `evalCategory` 评教大类, `totalScore` 总评分, `formFields` 表单隐藏字段Map, `indicators` 评价指标列表 |
+| `EvaluationIndicator` | `index` 指标序号, `category` 所属大类, `description` 描述文本, `options` 五个评级选项；方法 `getOption(EvaluationRating)` |
+| `EvaluationIndicatorOption` | `optionId` 选项ID, `label` 标签(如"优秀(10)"), `score` 分值, `rating` 对应评级枚举 |
+| `EvaluationRating` | 枚举: `EXCELLENT` 优秀, `GOOD` 良好, `MEDIUM` 中等, `PASS` 及格, `FAIL` 不及格 |
+| `EvaluationIndicatorType` | 语义化指标枚举: `TEACHER_ETHICS(2)` 师德师风, `TEACHING_PREPARATION(3)` 教学准备, `CONTENT_QUALITY(7)` 内容质量, `TEACHING_METHOD(4)` 方法技能, `TECHNOLOGY_USE(5)` 技术运用, `PROFESSIONAL_QUALITY(6)` 专业素养, `LEARNING_EXPERIENCE(8)` 学习体验, `ASSESSMENT_FEEDBACK(9)` 考核反馈, `REFLECTION_INNOVATION(10)` 反思创新 |
+| `EvaluationScheme` | 枚举: `CLOSEST_TO_FULL` 最接近满分(约98), `CLOSEST_TO_90` 最接近90分 |
 | `EvaluationResult` | `course` 课程, `scheme` 评分方案, `success` 是否成功, `score` 总分, `errorMessage` 错误信息 |
+| `EvaluationSubmission` | Builder模式: `.fromForm(FormData).indicator(index, rating).build()` → `toQueryString()`/`refererQueryString()` |
 
-#### CourseService — 课表
+#### 1.5.3 CourseService — 课表
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
-| `getCurrentWeeklyScheduleFromMainPage()` | `WeeklySchedule` | 获取当天所在周的周课表（已弃用，推荐使用 `getCourseTable`） |
+| `getCurrentWeeklyScheduleFromMainPage()` | `WeeklySchedule` | 获取当天所在周的周课表（已弃用） |
 | `getCourseTable(Term, int week)` | `CourseTable` | 获取指定学期、指定周的学期理论课表 |
 | `getCurrentCourseTable()` | `CourseTable` | 获取当前学期默认课表 |
 
@@ -304,12 +343,17 @@ svc.finalSubmit(entries.get(0));
 
 | Record | 字段 |
 |--------|------|
-| `Course` | `weekday` 星期几, `courseName` 课程名, `weeks` 周次范围, `section` 节次, `location` 上课地点, `teacher` 授课教师 |
+| `Term` | `startYear`/`endYear`/`termIndex` 起止年份和学期序号(1或2)；静态方法 `current()`/`parse("2025-2026-2")`；`toString()` → `"2025-2026-2"` |
+| `Course` | `weekday` 星期, `courseName` 课程名, `weeks` 周次范围, `section` 节次, `location` 上课地点, `teacher` 教师 |
 | `CourseTable` | `term` 学期, `week` 周数, `courses` 课程列表, `note` 备注, `remark` 标记 |
 | `WeeklySchedule` | `currentWeek` 当前周, `term` 学期, `courseList` 课程信息列表 |
 | `CourseInfo` | `courseName` 课程名, `credits` 学分, `property` 课程属性, `className` 班级, `location` 地点, `rawTime` 原始时间, `dayOfWeek`/`startNode`/`endNode` 星期/开始节/结束节, `week` 周次 |
+| `Weekday` | 枚举: `MONDAY(1)`~`SUNDAY(7)`, `UNDEFINED(0)`; `toString()` 返回中文名 |
+| `Weeks` | `weeks` 周次列表(int)；静态方法 `parse("1,3-5,7")` 解析周次字符串；`toString()` 返回压缩格式 |
+| `Section` | `start`/`end` 开始/结束节次(`SectionConstant`)；静态方法 `parse("[03-04]")` |
+| `SectionConstant` | 枚举: `S01(1)`~`S10(10)`, `UNDEFINED(0)` |
 
-#### GradeService — 成绩
+#### 1.5.4 GradeService — 成绩
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
@@ -322,10 +366,15 @@ svc.finalSubmit(entries.get(0));
 
 | Record | 字段 |
 |--------|------|
-| `CourseGrade` | `serialNumber` 序号, `startSemester` 开课学期, `courseId` 课程编号, `courseName` 课程名, `groupName` 分组名, `grade` 成绩, `gradeSymbol` 成绩符号, `credit` 学分, `classHours` 课时, `gradePointAverage` 绩点, `makeUpSemester` 补考学期, `assessmentMethod` 考核方式, `examinationNature` 考试性质, `courseAttributes` 课程属性, `courseNature` 课程性质, `courseCategories` 课程类别 |
-| `GradeReport` | `queryCondition` 查询条件描述, `totalCourseCount` 课程总数, `totalCredits` 总学分, `averageCreditGradePoint` 平均学分绩点, `averageScore` 平均分, `grades` 成绩列表 |
+| `GradeQuery` | Builder模式: `.startSemester(term).courseNature(nature).courseName(name).displayMode(mode).build()` → `toMap()` |
+| `CourseGrade` | `serialNumber` 序号, `startSemester` 开课学期, `courseId` 课程编号, `courseName` 课程名, `groupName` 分组, `grade` 成绩, `gradeSymbol` 成绩符号, `credit` 学分, `classHours` 课时, `gradePointAverage` 绩点, `makeUpSemester` 补考学期, `assessmentMethod` 考核方式, `examinationNature` 考试性质, `courseAttributes` 课程属性, `courseNature` 课程性质, `courseCategories` 课程类别 |
+| `GradeReport` | `queryCondition` 查询条件描述, `totalCourseCount` 课程总数, `totalCredits` 总学分, `averageCreditGradePoint` GPA, `averageScore` 平均分, `grades` 成绩列表 |
+| `AssessmentMethod` | 枚举: `EXAMINATION` 考试, `ASSESSMENT` 考查, `UNDEFINED` 未定义 |
+| `CourseAttributes` | 枚举: `REQUIRED` 必修, `OPTIONAL` 任选, `GENERAL_ELECTIVE` 公选, `UNDEFINED` 未定义 |
+| `CourseNature` | 枚举(17种): `PUBLIC_COURSE` 公共课, `PUBLIC_BASIC_COURSES` 公共基础课, `PROFESSIONAL_BASIC_COURSES` 专业基础课, `PROFESSIONAL_COURSES` 专业课, ...等；方法 `fromValue("01")`/`fromDisplayName("公共课")` |
+| `GradeDisplayMode` | 枚举: `ALL("all")` 全部, `MAX("max")` 最高 |
 
-#### ExamScheduleService — 考试安排
+#### 1.5.5 ExamScheduleService — 考试安排
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
@@ -337,8 +386,10 @@ svc.finalSubmit(entries.get(0));
 | Record | 字段 |
 |--------|------|
 | `ExamSchedule` | `index` 序号, `campus` 校区, `session` 场次, `courseId` 课程编号, `courseName` 课程名, `instructor` 教师, `examTime` 考试时间, `examRoom` 考场, `seatNumber` 座位号, `admissionNo` 准考证号, `remarks` 备注, `operation` 操作 |
+| `ExamScheduleQuery` | Builder模式: `.xnxqid(term).xqlb(semesterType).build()` → `toMap()` |
+| `SemesterType` | 枚举: `BEGINNING_OF_TERM("1")` 期初, `MID_TERM("2")` 期中, `END_OF_TERM("3")` 期末 |
 
-#### NotificationService — 通知公告
+#### 1.5.6 NotificationService — 通知公告
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
@@ -349,9 +400,10 @@ svc.finalSubmit(entries.get(0));
 
 | Record | 字段 |
 |--------|------|
-| `Notification` | `id` 通知ID, `title` 标题, `publisher` 发布者, `datetime` 发布时间字符串, `content` 正文, `html` 原始HTML, `loaded` 是否已加载详情；附加方法 `publishTime()` 返回 `LocalDateTime` |
+| `Notification` | `id` 通知ID, `title` 标题, `publisher` 发布者, `datetime` 发布时间字符串, `content` 正文, `html` 原始HTML, `loaded` 是否已加载；方法 `publishTime()` → `LocalDateTime`, `withDetails(...)` |
+| `NotificationDetail` | `publisher` 发布者, `dateTime` 时间, `content` 正文, `html` HTML |
 
-#### LoginService — 登录与会话
+#### 1.5.7 LoginService — 登录与会话
 
 | 方法 | 返回值 | 说明 |
 |------|--------|------|
@@ -360,14 +412,13 @@ svc.finalSubmit(entries.get(0));
 
 > **注意**：`LoginService` 通常不需要手动调用。登录不会在 `QFNUClient` 构建时立即执行，而是在首次发起 HTTP 请求时由 `SessionInterceptor` 检测到未登录状态后自动触发。Session 过期时也会自动续期。
 
-**常用参数对象：**
+#### 1.5.8 其他模型
 
-| 类 | 构建方式 | 关键字段/方法 |
-|----|----------|------------|
-| `Term` | `Term.current()` 当前学期；`Term.of("2025-2026-2")` | `toString()` 返回学期编码，如 `"2025-2026-2"` |
-| `GradeQuery` | `GradeQuery.builder().kksj(term).kcxz(nature).kcmc(name).build()` | `kksj` 开课学期, `kcxz` 课程性质, `kcmc` 课程名称（模糊）, `xsfs` 显示模式；`toMap()` 转为请求参数 |
-| `ExamScheduleQuery` | `ExamScheduleQuery.builder().xnxqid(term).build()` | `xnxqid` 学期, `xqlb` 学期类别；`toMap()` 转为请求参数 |
-| `CourseNature` | `CourseNature.fromValue("01")` | 课程性质枚举：`displayName` 显示名, `value` 编码值 |
+| 类 | 类型 | 说明 |
+|----|------|------|
+| `College` | 枚举 | 学院枚举(部分): `SCHOOL_OF_HISTORY_AND_CULTURE` 历史文化学院, `SCHOOL_OF_PSYCHOLOGY` 心理学院, `SCHOOL_OF_CYBERSECURITY` 网络空间安全学院, `SCHOOL_OF_MARXISM` 马克思主义学院, `SCHOOL_OF_MATHEMATICAL_SCIENCES` 数学科学学院；字段 `name` |
+| `ExecutionPlanResult` | Record | `num` 序号, `startTerm` 开课学期, `id` 编号, `courseName` 课程名 |
+| `CaptchaService` | 接口 | `recognize(byte[] imageBytes)` → 验证码字符串 |
 
 ### 1.6 验证码自定义
 
