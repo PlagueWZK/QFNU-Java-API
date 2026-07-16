@@ -10,8 +10,8 @@ public record Term(int startYear, int endYear, int termIndex) {
         if (endYear - startYear != 1) {
             throw new InvalidParameterException("学期年份必须连续，例如 2025-2026");
         }
-        if (termIndex < 1 || termIndex > 2) {
-            throw new InvalidParameterException("学期序号必须为 1 或 2");
+        if (termIndex < 1 || termIndex > 3) {
+            throw new InvalidParameterException("学期序号∈{1,2,3}");
         }
     }
 
@@ -31,7 +31,7 @@ public record Term(int startYear, int endYear, int termIndex) {
                     Integer.parseInt(parts[2])
             );
         } catch (Exception exception) {
-            throw new InvalidParameterException("学期 id 格式错误，应为 yyyy-yyyy-n", exception);
+            throw new InvalidParameterException("学期格式错误，应为 yyyy-yyyy-n, 年份公差为1,n<=3", exception);
         }
     }
 
