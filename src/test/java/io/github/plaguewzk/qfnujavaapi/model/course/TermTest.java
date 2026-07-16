@@ -75,10 +75,10 @@ class TermTest {
         }
 
         @Test
-        @DisplayName("学期序号不在 [1,2] 范围时抛出 InvalidParameterException")
+        @DisplayName("学期序号不在 [1,3] 范围时抛出 InvalidParameterException")
         void shouldRejectInvalidTermIndex() {
             assertThrows(InvalidParameterException.class, () -> new Term(2025, 2026, 0));
-            assertThrows(InvalidParameterException.class, () -> new Term(2025, 2026, 3));
+            assertThrows(InvalidParameterException.class, () -> new Term(2025, 2026, 4));
         }
 
         @Test
