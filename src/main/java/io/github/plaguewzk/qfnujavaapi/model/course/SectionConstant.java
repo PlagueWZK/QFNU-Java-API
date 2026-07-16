@@ -18,6 +18,7 @@ public enum SectionConstant {
     S09(9),
     S10(10),
     S11(11),
+    S12(12),
     UNDEFINED(0);
 
     private static final Map<Integer, SectionConstant> CACHE = new HashMap<>();

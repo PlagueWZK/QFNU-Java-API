@@ -2,6 +2,8 @@ package io.github.plaguewzk.qfnujavaapi.service;
 
 import io.github.plaguewzk.qfnujavaapi.BaseIntegrationTest;
 import io.github.plaguewzk.qfnujavaapi.model.course.CourseTable;
+import io.github.plaguewzk.qfnujavaapi.model.course.Term;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author PlagueWZK
  */
 @DisplayName("课表服务集成测试")
+@Slf4j
 class CourseServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
@@ -38,5 +41,11 @@ class CourseServiceIntegrationTest extends BaseIntegrationTest {
         assertEquals(current.term(), table.term(), "学期应一致");
         assertEquals(current.week(), table.week(), "周次应一致");
         assertNotNull(table.courses(), "课程列表不应为 null");
+    }
+
+    @Test
+    void customTest(){
+        CourseService service = client.service(CourseService.class);
+        assertDoesNotThrow(() -> service.getCourseTable(Term.parse("2023-2024-1"), 8));
     }
 }
