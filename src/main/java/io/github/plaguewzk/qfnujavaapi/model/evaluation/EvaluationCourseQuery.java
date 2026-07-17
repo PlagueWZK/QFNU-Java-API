@@ -12,15 +12,16 @@ import java.util.Objects;
  * @author PlagueWZK
  */
 @SuppressWarnings("SpellCheckingInspection")
-public final class EvaluationCourseQuery {
-    private final String pj0502id;
-    private final String pj01id;
-    private final String xnxq01id;
+public record EvaluationCourseQuery(String pj0502id, String pj01id, String xnxq01id) {
+
+    public EvaluationCourseQuery {
+        pj0502id = normalize(pj0502id);
+        pj01id = normalize(pj01id);
+        xnxq01id = normalize(xnxq01id);
+    }
 
     private EvaluationCourseQuery(Builder builder) {
-        this.pj0502id = normalize(builder.pj0502id);
-        this.pj01id = normalize(builder.pj01id);
-        this.xnxq01id = normalize(builder.xnxq01id);
+        this(builder.pj0502id, builder.pj01id, builder.xnxq01id);
     }
 
     /**
@@ -40,18 +41,6 @@ public final class EvaluationCourseQuery {
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    public String pj0502id() {
-        return pj0502id;
-    }
-
-    public String pj01id() {
-        return pj01id;
-    }
-
-    public String xnxq01id() {
-        return xnxq01id;
     }
 
     public Map<String, String> toMap() {

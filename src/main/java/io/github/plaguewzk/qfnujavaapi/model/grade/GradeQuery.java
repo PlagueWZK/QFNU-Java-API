@@ -9,17 +9,17 @@ import java.util.Map;
  * 成绩查询参数。
  */
 @SuppressWarnings("SpellCheckingInspection")
-public final class GradeQuery {
-    private final String kksj;
-    private final String kcxz;
-    private final String kcmc;
-    private final String xsfs;
+public record GradeQuery(String kksj, String kcxz, String kcmc, String xsfs) {
+
+    public GradeQuery {
+        kksj = normalize(kksj);
+        kcxz = normalize(kcxz);
+        kcmc = normalize(kcmc);
+        xsfs = normalize(xsfs);
+    }
 
     private GradeQuery(Builder builder) {
-        this.kksj = normalize(builder.kksj);
-        this.kcxz = normalize(builder.kcxz);
-        this.kcmc = normalize(builder.kcmc);
-        this.xsfs = normalize(builder.xsfs);
+        this(builder.kksj, builder.kcxz, builder.kcmc, builder.xsfs);
     }
 
     public static Builder builder() {
@@ -28,22 +28,6 @@ public final class GradeQuery {
 
     public static GradeQuery defaultQuery() {
         return builder().build();
-    }
-
-    public String kksj() {
-        return kksj;
-    }
-
-    public String kcxz() {
-        return kcxz;
-    }
-
-    public String kcmc() {
-        return kcmc;
-    }
-
-    public String xsfs() {
-        return xsfs;
     }
 
     public Map<String, String> toMap() {

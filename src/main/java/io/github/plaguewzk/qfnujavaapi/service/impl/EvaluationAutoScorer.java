@@ -1,4 +1,8 @@
-package io.github.plaguewzk.qfnujavaapi.model.evaluation;
+package io.github.plaguewzk.qfnujavaapi.service.impl;
+
+import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationFormData;
+import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationIndicator;
+import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationRating;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

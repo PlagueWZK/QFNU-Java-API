@@ -23,15 +23,14 @@ public record Term(int startYear, int endYear, int termIndex) {
         if (termId == null || termId.isBlank()) {
             throw new InvalidParameterException("学期 id 不能为空");
         }
+        String[] parts = termId.split("-");
+        if (parts.length != 3) {
+            throw new InvalidParameterException("学期 id 格式错误，应为 yyyy-yyyy-n，实际: " + termId);
+        }
         try {
-            String[] parts = termId.split("-");
-            return new Term(
-                    Integer.parseInt(parts[0]),
-                    Integer.parseInt(parts[1]),
-                    Integer.parseInt(parts[2])
-            );
-        } catch (Exception exception) {
-            throw new InvalidParameterException("学期格式错误，应为 yyyy-yyyy-n, 年份公差为1,n<=3", exception);
+            return new Term(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+        } catch (NumberFormatException e) {
+            throw new InvalidParameterException("学期 id 格式错误，应为 yyyy-yyyy-n，实际: " + termId, e);
         }
     }
 

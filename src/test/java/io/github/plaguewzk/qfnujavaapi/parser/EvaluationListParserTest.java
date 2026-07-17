@@ -4,14 +4,12 @@ import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.model.course.Term;
 import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationEntry;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.EvaluationListParser;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled("暂不执行评教相关测试")
 class EvaluationListParserTest {
 
     @Test

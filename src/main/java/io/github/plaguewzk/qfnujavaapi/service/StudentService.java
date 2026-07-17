@@ -5,6 +5,8 @@ import io.github.plaguewzk.qfnujavaapi.core.QFNUContext;
 import io.github.plaguewzk.qfnujavaapi.core.QFNUExecutor;
 import io.github.plaguewzk.qfnujavaapi.model.evaluation.*;
 import io.github.plaguewzk.qfnujavaapi.model.student.StudentInfo;
+import io.github.plaguewzk.qfnujavaapi.service.impl.EvaluationAutoScorer;
+import io.github.plaguewzk.qfnujavaapi.service.impl.EvaluationSubmission;
 import io.github.plaguewzk.qfnujavaapi.parser.HtmlParser;
 import lombok.extern.slf4j.Slf4j;
 

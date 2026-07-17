@@ -4,14 +4,12 @@ import io.github.plaguewzk.qfnujavaapi.exception.PageStructureException;
 import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationFormData;
 import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationIndicator;
 import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationRating;
-import io.github.plaguewzk.qfnujavaapi.model.evaluation.EvaluationSubmission;
+import io.github.plaguewzk.qfnujavaapi.service.impl.EvaluationSubmission;
 import io.github.plaguewzk.qfnujavaapi.parser.impl.EvaluationFormParser;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled("暂不执行评教相关测试")
 class EvaluationFormParserTest {
 
     private static final String SAMPLE_FORM_HTML = """
